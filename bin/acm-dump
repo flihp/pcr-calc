@@ -3,13 +3,12 @@
 # Copyright 2013 Philip Tricca <flihp@twobit.us>
 #
 
-import txt
+import os
 import pcrutil
+import sys
+import txt
 
 def main():
-    import sys
-    import os
-
     usage = "Usage: {0} [acm file]".format(sys.argv[0])
 
     if len(sys.argv) != 2:
