@@ -1,0 +1,4 @@
+2013-01-31  Philip Tricca  <flihp@twobit.us>
+	* txt.py: first version of the ACM parsing code
+	* pcrutil.py: place to put stuff that doesn't fit elsewhere
+	* acm-dump: first version of program to display parsed ACM module

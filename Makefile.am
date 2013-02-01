@@ -1,0 +1,1 @@
+SUBDIRS = pcr-calc bin
