@@ -1,1 +1,13 @@
 *.pyc
+Makefile.in
+Makefile
+
+/autom4te.cache
+/aclocal.m4
+/compile
+/config.log
+/config.status
+/configure
+/install-sh
+/missing
+/py-compile
