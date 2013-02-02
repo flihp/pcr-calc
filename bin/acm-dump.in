@@ -13,7 +13,7 @@ def main():
     description = "Parse and dump data from an Authenticated Code Module (ACM)"
     acm_help = "path to ACM file"
     ver_help = "version information"
-    ver_str = "%(prog)s 0.1"
+    ver_str = "%(prog)s: @PACKAGE@ @VERSION@"
 
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('acm', nargs=1, help=acm_help)
