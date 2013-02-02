@@ -3,23 +3,21 @@
 # Copyright 2013 Philip Tricca <flihp@twobit.us>
 #
 
+import argparse
 import os
 import pcrutil
 import sys
 import txt
 
 def main():
-    usage = "Usage: {0} [acm file]".format(sys.argv[0])
+    description = "Parse and dump data from an Authenticated Code Module (ACM)"
+    acm_help = "Path to ACM file."
 
-    if len(sys.argv) != 2:
-        print usage
-        sys.exit (1)
-
-    if not os.path.isfile (sys.argv [1]):
-        print usage
-        sys.exit (1)
-
-    f = open (sys.argv [1])
+    parser = argparse.ArgumentParser(description=description)
+    parser.add_argument('acm', nargs=1, help=acm_help)
+    ns = parser.parse_args()
+    
+    f = open (vars(ns)['acm'][0])
     acm = txt.acmParse (f)
     print "  ModuleType:     {0}".format (acm.ModuleType ())
     print "  ModuleSubType:  {0}".format (acm.ModuleSubType ())
