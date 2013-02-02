@@ -11,3 +11,5 @@ Makefile
 /install-sh
 /missing
 /py-compile
+
+/bin/acm-dump
