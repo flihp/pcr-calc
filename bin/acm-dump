@@ -11,10 +11,13 @@ import txt
 
 def main():
     description = "Parse and dump data from an Authenticated Code Module (ACM)"
-    acm_help = "Path to ACM file."
+    acm_help = "path to ACM file"
+    ver_help = "version information"
+    ver_str = "%(prog)s 0.1"
 
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('acm', nargs=1, help=acm_help)
+    parser.add_argument('-v', '--version', help=ver_help, action='version', version=ver_str)
     ns = parser.parse_args()
     
     f = open (vars(ns)['acm'][0])
