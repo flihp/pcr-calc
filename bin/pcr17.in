@@ -4,6 +4,8 @@
 #
 
 import argparse
+import sys
+import txt
 
 def main():
     description = "Calculate PCR[17] from an Authenticated Code Module (ACM) and whatever data is needed"
