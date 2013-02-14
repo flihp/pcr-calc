@@ -60,8 +60,8 @@ class acmParse(object):
     def DateObj(self):
         self._datebcd = self.Date ()
         # could not be less efficient, but seems to work
-        _year = int (hex ((self._datebcd & 0xFFFF0000) >> 16)[2:])
-        _month = int (hex ((self._datebcd & 0x0000FF00) >> 8)[2:])
+        _year = int (hex (self._datebcd >> 16)[2:])
+        _month = int (hex ((self._datebcd >> 8) & 0x0000FF)[2:])
         _day = int (hex (self._datebcd & 0x000000F)[2:])
         return datetime.date (_year, _month, _day)
     def Size(self):
