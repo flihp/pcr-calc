@@ -3,6 +3,8 @@
 #
 # module for interacting with stuff from TXT
 
+import base64
+import hashlib
 import struct
 import datetime
 
@@ -99,3 +101,15 @@ class acmParse(object):
         acmsize = self._acmfile.tell ()
         start = 644 + self.ScratchSize () * 4
         return self._read_bytes (start, acmsize - start)
+
+class pcrEmu(object):
+    def __init__(self):
+        self._value = base64.b16decode(b'00000000000000000000')
+    def extend(self,something):
+        _sha1 = hashlib.sha1 ()
+        _sha1.update(self._value + something)
+        self._value = _sha1.digest ()
+    def read(self):
+        return self._value
+    def hexread(self):
+        return self._value.encode("hex")
