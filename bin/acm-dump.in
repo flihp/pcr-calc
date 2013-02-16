@@ -16,11 +16,11 @@ def main():
     ver_str = "%(prog)s: @PACKAGE@ @VERSION@"
 
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument('acm', nargs=1, help=acm_help)
+    parser.add_argument('acm', help=acm_help)
     parser.add_argument('-v', '--version', help=ver_help, action='version', version=ver_str)
     ns = parser.parse_args()
     
-    f = open (vars(ns)['acm'][0], 'rb')
+    f = open (ns.acm, 'rb')
     acm = txt.acmParse (f)
     print "  ModuleType:     {0}".format (acm.ModuleType ())
     print "  ModuleSubType:  {0}".format (acm.ModuleSubType ())
