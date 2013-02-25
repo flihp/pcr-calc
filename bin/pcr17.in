@@ -4,6 +4,8 @@
 #
 
 import argparse
+import base64
+import hashlib
 import sys
 import txt
 
@@ -20,6 +22,54 @@ def main():
 
     f = open (ns.acm, 'rb')
     acm = txt.acmParse (f)
+
+    # Calculate SinitMleData.SinitHash which is the value of PCR[17] after
+    #   the first extend operation.
+    # See the massively convoluted description in section 1.9.1 of the Intel
+    #   MLE Developer's Guide for details.
+
+    # sha256 (SINIT ACM)
+    acmhash = hashlib.sha256 ()
+    acmhash.update (acm.ModuleType_Bytes ())
+    acmhash.update (acm.ModuleSubType_Bytes ())
+    acmhash.update (acm.HeaderLen_Bytes ())
+    acmhash.update (acm.HeaderVersion_Bytes ())
+    acmhash.update (acm.ChipsetID_Bytes ())
+    acmhash.update (acm.Flags_Bytes ())
+    acmhash.update (acm.ModuleVendor_Bytes ())
+    acmhash.update (acm.Date_Bytes ())
+    acmhash.update (acm.Size_Bytes ())
+    acmhash.update (acm.Reserved1_Bytes ())
+    acmhash.update (acm.CodeControl_Bytes ())
+    acmhash.update (acm.ErrorEntryPoint_Bytes ())
+    acmhash.update (acm.GDTLimit_Bytes ())
+    acmhash.update (acm.GDTBasePtr_Bytes ())
+    acmhash.update (acm.SegSel_Bytes ())
+    acmhash.update (acm.EntryPoint_Bytes ())
+    acmhash.update (acm.Reserved2 ())
+    acmhash.update (acm.KeySize_Bytes ())
+    acmhash.update (acm.ScratchSize_Bytes ())
+    # These are the fields we don't hash.  See section A.1.2 of the Intel MLE
+    #   Developer's Guide for details.
+    # acmhash.update (acm.RSAPubKey ())
+    # acmhash.update (acm.RSAPubExp_Bytes ())
+    # acmhash.update (acm.RSASig ())
+    # acmhash.update (acm.Scratch ())
+    acmhash.update (acm.UserArea ())
+
+    # Calculate HASH_DATA for first extend of PCR[17]:
+    #   sha1 (sha256(ACM) | SinitMleData.EdxSenterFlags)
+    # Assume SinitMleData.EdxSenterFlags is 4 bytes of 0's
+    hash_data = hashlib.sha1 ()
+    hash_data.update (acmhash.digest ())
+    hash_data.update (base64.b16decode(b'00000000'))
+
+    # Value of PCR[17] after initial extend = SinitMleData.SinitHash
+    #   PCR[17] is initialized to 20 bytes of 0's on platform reset.
+    # SinitMleData.SinitHash = sha1 (pcr[17] | HASH_DATA)
+    pcr17 = txt.pcrEmu ()
+    pcr17.extend (hash_data.digest ())
+    print "SinitMleData.SinitHash: {0}".format (pcr17.hexread ())
 
     sys.exit (0)
 
