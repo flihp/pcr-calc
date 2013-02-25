@@ -166,7 +166,7 @@ class acmParse(object):
 
 class pcrEmu(object):
     def __init__(self):
-        self._value = base64.b16decode(b'00000000000000000000')
+        self._value = base64.b16decode(''.join('00' for x in range (0, hashlib.sha1 ().digest_size)))
     def extend(self,something):
         _sha1 = hashlib.sha1 ()
         _sha1.update(self._value + something)
