@@ -12,12 +12,14 @@ import txt
 def main():
     description = "Calculate PCR[17] from an Authenticated Code Module (ACM) and whatever data is needed"
     acm_help = "path to ACM file"
+    smd_help = "Sinit to Mle Data Table Version.  Default is version 8."
     ver_help = "version information"
     ver_str = "%(prog)s: @PACKAGE@ @VERSION@"
 
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('acm', help=acm_help)
     parser.add_argument('-v', '--version', help=ver_help, action='version', version=ver_str)
+    parser.add_argument('-s', '--smd', default=8, help=smd_help, type=int)
     ns = parser.parse_args()
 
     f = open (ns.acm, 'rb')
@@ -27,9 +29,13 @@ def main():
     #   the first extend operation.
     # See the massively convoluted description in section 1.9.1 of the Intel
     #   MLE Developer's Guide for details.
-
-    # sha256 (SINIT ACM)
-    acmhash = hashlib.sha256 ()
+    # select hash algorithm for ACM based on SINIT to MLE Data Table version
+    #   version < 7: sha1 (sha1(ACM) | SinitMleData.EdxSenterFlags)
+    #   version > 6: sha1 (sha256 (ACM) | SinitMleData.EdxSenterFlags)
+    if ns.smd > 6:
+        acmhash = hashlib.sha256 ()
+    else:
+        acmhash = hashlib.sha1 ()
     acmhash.update (acm.ModuleType_Bytes ())
     acmhash.update (acm.ModuleSubType_Bytes ())
     acmhash.update (acm.HeaderLen_Bytes ())
@@ -58,7 +64,6 @@ def main():
     acmhash.update (acm.UserArea ())
 
     # Calculate HASH_DATA for first extend of PCR[17]:
-    #   sha1 (sha256(ACM) | SinitMleData.EdxSenterFlags)
     # Assume SinitMleData.EdxSenterFlags is 4 bytes of 0's
     hash_data = hashlib.sha1 ()
     hash_data.update (acmhash.digest ())
