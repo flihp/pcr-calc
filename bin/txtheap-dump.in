@@ -1,0 +1,23 @@
+#!/usr/bin/env python
+#
+# Copyright 2013 Philip Tricca <flihp@twobit.us>
+#
+
+import argparse
+import sys
+
+def main():
+    description = "Dump and optionally pretty-print TXT heap from /dev/mem"
+    pp_help = "parse and format binary heap to human readable form"
+    ver_help = "version information"
+    ver_str = "%(prog)s: @PACKAGE@ @VERSION@"
+
+    parser = argparse.ArgumentParser(description=description)
+    parser.add_argument('-v', '--version', help=ver_help, action='version', version=ver_str)
+    parser.add_argument('-p', '--pretty', help=pp_help, action='store_true')
+    args = parser.parse_args()
+
+    sys.exit (0)
+
+if __name__ == "__main__":
+   main ()

@@ -1,6 +1,6 @@
-bin_SCRIPTS = acm-dump pcr17
+bin_SCRIPTS = acm-dump pcr17 txtheap-dump
 CLEANFILES = $(bin_SCRIPTS)
-EXTRA_DIST = acm-dump.in pcr17.in
+EXTRA_DIST = acm-dump.in pcr17.in txtheap-dump.in
 SUFFIXES = .in
 
 do_subst = sed -e 's,[@]PACKAGE[@],$(PACKAGE),g' \
@@ -8,6 +8,7 @@ do_subst = sed -e 's,[@]PACKAGE[@],$(PACKAGE),g' \
 
 acm-dump: acm-dump.in Makefile
 pcr17: pcr17.in Makefile
+txtheap-dump: txtheap-dump.in Makefile
 
 .in:
 	$(do_subst) < $< > $@
