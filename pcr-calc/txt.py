@@ -22,26 +22,30 @@ class acmFlags(object):
     def Raw(self):
         return self._flags
 
-class acmParse(object):
+class binParse(object):
     def __init__(self, pfile):
-        self._acmfile = pfile
+        self._file = pfile
 
     # "private" convenience functions
     def _read_bytes(self, offset, length):
-        self._acmfile.seek (offset)
+        self._file.seek (offset)
         inttup = struct.unpack ('<{0}B'.format(length),
-                                self._acmfile.read (length))
+                                self._file.read (length))
         return bytearray (inttup)
     def _read_uint8(self, offset):
-        self._acmfile.seek (offset)
-        return struct.unpack ('<c', self._acmfile.read (1))[0]
+        self._file.seek (offset)
+        return struct.unpack ('<c', self._file.read (1))[0]
     def _read_uint16(self, offset):
-        self._acmfile.seek (offset)
-        return struct.unpack ('<H', self._acmfile.read (2))[0]
+        self._file.seek (offset)
+        return struct.unpack ('<H', self._file.read (2))[0]
     def _read_uint32(self, offset):
-        self._acmfile.seek (offset)
-        return struct.unpack ('<I', self._acmfile.read (4))[0]
+        self._file.seek (offset)
+        return struct.unpack ('<I', self._file.read (4))[0]
+    def _read_unit64(self,offset):
+        self._file.seek (offset)
+        return struct.unpack ('<Q', self._file.read (8))[0]
 
+class acmParse(binParse):
     # public accessor functions
     # ModuleType is 2 bytes at offset 0
     def ModuleType(self):
@@ -159,8 +163,8 @@ class acmParse(object):
         return self._read_bytes (644, self.ScratchSize () * 4)
     # UserArea is the rest of the file starting at offset 644 + ScratchSize * 4
     def UserArea(self):
-        self._acmfile.seek(0, 2)
-        acmsize = self._acmfile.tell ()
+        self._file.seek(0, 2)
+        acmsize = self._file.tell ()
         start = 644 + self.ScratchSize () * 4
         return self._read_bytes (start, acmsize - start)
 
