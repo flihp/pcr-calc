@@ -168,6 +168,32 @@ class acmParse(binParse):
         start = 644 + self.ScratchSize () * 4
         return self._read_bytes (start, acmsize - start)
 
+class txtHeap(binParse):
+    def __init__ (self, pfile, pbase, psize):
+        super (txtHeap, self).__init__ (pfile)
+        self._base = pbase
+        self._size = psize
+    def BiosDataSize (self):
+        return self._read_uint64 (self._base)
+
+class pubConfRegsParse(binParse):
+    def __init__(self, pfile, from_mem=True):
+        super (pubConfRegsParse, self).__init__ (pfile)
+        if from_mem:
+            self._TXT_PUB_CONFIG_REGS_BASE = 0xfed30000
+        else:
+            self._TXT_PUB_CONFIG_REGS_BASE = 0x0
+        self._HEAP_BASE_OFFSET = self._TXT_PUB_CONFIG_REGS_BASE + 0x300
+        self._HEAP_SIZE_OFFSET = self._TXT_PUB_CONFIG_REGS_BASE + 0x308
+    def HeapBase (self):
+        return self._read_uint32 (self._HEAP_BASE_OFFSET)
+    def HeapSize (self):
+        return self._read_uint32 (self._HEAP_SIZE_OFFSET)
+    def Heap (self):
+        return txtHeap (self._file, self.HeapBase (), self.HeapSize ())
+    def HeapBytes (self):
+        return self._read_bytes (self.HeapBase (), self.HeapSize ())
+
 class pcrEmu(object):
     def __init__(self):
         self._value = base64.b16decode(''.join('00' for x in range (0, hashlib.sha1 ().digest_size)))
