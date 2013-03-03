@@ -4,10 +4,13 @@
 #
 
 import argparse
+import exceptions
 import sys
+import txt
 
 def main():
     description = "Dump and optionally pretty-print TXT heap from /dev/mem"
+    infile_help = 'file to read as TXT Heap instead of /dev/mem'
     pp_help = "parse and format binary heap to human readable form"
     ver_help = "version information"
     ver_str = "%(prog)s: @PACKAGE@ @VERSION@"
@@ -15,7 +18,19 @@ def main():
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('-v', '--version', help=ver_help, action='version', version=ver_str)
     parser.add_argument('-p', '--pretty', help=pp_help, action='store_true')
+    parser.add_argument('-i', '--infile', help=infile_help, default='/dev/mem')
     args = parser.parse_args()
+
+    try:
+        fd_infile = open (args.infile, 'rb')
+    except IOError as e:
+        sys.stderr.write ('Error opening {0} for reading: \"{1}\", trying mmap ...\n'.format(e.filename, e.strerror))
+        sys.exit (1)
+        
+    if not args.infile:
+        txtPubRegs = txt.pubConfRegsParse (fd_infile)
+    else:
+        txtPubRegs = txt.pubConfRegsParse (fd_infile, False)
 
     sys.exit (0)
 
