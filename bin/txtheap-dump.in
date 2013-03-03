@@ -24,7 +24,7 @@ def main():
     try:
         fd_infile = open (args.infile, 'rb')
     except IOError as e:
-        sys.stderr.write ('Error opening {0} for reading: \"{1}\", trying mmap ...\n'.format(e.filename, e.strerror))
+        sys.stderr.write ('Error opening {0} for reading: \"{1}\" ... Abort\n'.format(e.filename, e.strerror))
         sys.exit (1)
         
     if not args.infile:
