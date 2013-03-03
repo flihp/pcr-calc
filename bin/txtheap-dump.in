@@ -9,11 +9,11 @@ import sys
 import txt
 
 def main():
-    description = "Dump and optionally pretty-print TXT heap from /dev/mem"
+    description = 'Dump and optionally pretty-print TXT heap from /dev/mem'
     infile_help = 'file to read as TXT Heap instead of /dev/mem'
-    pp_help = "parse and format binary heap to human readable form"
-    ver_help = "version information"
-    ver_str = "%(prog)s: @PACKAGE@ @VERSION@"
+    pp_help = 'parse and format binary heap to human readable form'
+    ver_help = 'version information'
+    ver_str = '%(prog)s: @PACKAGE@ @VERSION@'
 
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('-v', '--version', help=ver_help, action='version', version=ver_str)
