@@ -3,7 +3,8 @@ CLEANFILES = $(bin_SCRIPTS)
 EXTRA_DIST = acm-dump.in pcr17.in txtheap-dump.in
 SUFFIXES = .in
 
-do_subst = sed -e 's,[@]PACKAGE[@],$(PACKAGE),g' \
+do_subst = sed -e 's,[@]pythondir[@],$(pythondir),g' \
+               -e 's,[@]PACKAGE[@],$(PACKAGE),g' \
                -e 's,[@]VERSION[@],$(VERSION),g'
 
 acm-dump: acm-dump.in Makefile
