@@ -7,6 +7,9 @@ import argparse
 import base64
 import hashlib
 import sys
+
+sys.path.insert(1, '@pythondir@/@PACKAGE@')
+
 import txt
 
 def main():
