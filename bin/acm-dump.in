@@ -5,11 +5,12 @@
 
 import argparse
 import os
-import pcrutil
 import sys
-import txt
 
 sys.path.insert(1, '@pythondir@')
+
+import pcrutil
+import txt
 
 def main():
     description = "Parse and dump data from an Authenticated Code Module (ACM)"
