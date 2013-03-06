@@ -7,6 +7,7 @@ import base64
 import hashlib
 import struct
 import datetime
+import mmap
 
 class acmFlags(object):
     def __init__(self, stuff):
@@ -23,29 +24,57 @@ class acmFlags(object):
         return self._flags
 
 class binParse(object):
-    def __init__(self, pfile):
+    def __init__(self, pfile, dommap=False):
         self._file = pfile
+        self._file.seek (0,2)
+        self._file_size = self._file.tell ()
+        self._file.seek (0)
+        self._filemmap = None
+        if dommap:
+            self._filemmap = mmap.mmap (self._file.fileno (), 0, access=mmap.ACCESS_READ)
 
     # "private" convenience functions
     def _read_bytes(self, offset, length):
-        self._file.seek (offset)
-        inttup = struct.unpack ('<{0}B'.format(length),
-                                self._file.read (length))
+        if self._filemmap:
+            _tmp = self._filemmap [offset : offset + length]
+        else:
+            self._file.seek (offset)
+            _tmp = self._file.read (length)
+        inttup = struct.unpack ('<{0}B'.format(length), _tmp)
         return bytearray (inttup)
     def _read_uint8(self, offset):
-        self._file.seek (offset)
-        return struct.unpack ('<c', self._file.read (1))[0]
+        if self._filemmap:
+            _tmp = self._filemmap [offset : offset + 11]
+        else:
+            self._file.seek (offset)
+            _tmp = self._file.read (1)
+        return struct.unpack ('<c', _tmp)[0]
     def _read_uint16(self, offset):
-        self._file.seek (offset)
-        return struct.unpack ('<H', self._file.read (2))[0]
+        if self._filemmap:
+            _tmp = self._filemmap [offset : offset + 2]
+        else:
+            self._file.seek (offset)
+            _tmp = self._file.read (2)
+        return struct.unpack ('<H', _tmp)[0]
     def _read_uint32(self, offset):
-        self._file.seek (offset)
-        return struct.unpack ('<I', self._file.read (4))[0]
+        if self._filemmap:
+            _tmp = self._filemmap [offset : offset + 4]
+        else:
+            self._file.seek (offset)
+            _tmp = self._file.read (4)
+        return struct.unpack ('<I', _tmp)[0]
     def _read_unit64(self,offset):
-        self._file.seek (offset)
-        return struct.unpack ('<Q', self._file.read (8))[0]
+        if self._filemmap:
+            _tmp = self._filemmap [offset : offset + 8]
+        else:
+            self._file.seek (offset)
+            _tmp = self._file.read (8)
+        return struct.unpack ('<Q', _tmp)[0]
 
 class acmParse(binParse):
+    def __init__ (self, pfile, pmmap=False):
+        super (acmParse, self).__init__ (pfile, pmmap)
+
     # public accessor functions
     # ModuleType is 2 bytes at offset 0
     def ModuleType(self):
@@ -170,7 +199,7 @@ class acmParse(binParse):
 
 class txtHeap(binParse):
     def __init__ (self, pfile, pbase, psize):
-        super (txtHeap, self).__init__ (pfile)
+        super (txtHeap, self).__init__ (pfile, False)
         self._base = pbase
         self._size = psize
     def BiosDataSize (self):
@@ -178,7 +207,7 @@ class txtHeap(binParse):
 
 class pubConfRegsParse(binParse):
     def __init__(self, pfile, from_mem=True):
-        super (pubConfRegsParse, self).__init__ (pfile)
+        super (pubConfRegsParse, self).__init__ (pfile, False)
         if from_mem:
             self._TXT_PUB_CONFIG_REGS_BASE = 0xfed30000
         else:
