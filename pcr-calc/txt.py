@@ -72,130 +72,153 @@ class binParse(object):
         return struct.unpack ('<Q', _tmp)[0]
 
 class acmParse(binParse):
+    # offsets & sizes from MLE dev guide appendix A.1, table 3
+    _MODULE_TYPE_OFFSET = 0
+    _MODULE_TYPE_SIZE = 2
+    _MODULE_SUBTYPE_OFFSET = _MODULE_TYPE_OFFSET + _MODULE_TYPE_SIZE
+    _MODULE_SUBTYPE_SIZE = 2
+    _HEADER_LENGTH_OFFSET = _MODULE_SUBTYPE_OFFSET + _MODULE_SUBTYPE_SIZE
+    _HEADER_LENGTH_SIZE = 4
+    _HEADER_VERSION_OFFSET = _HEADER_LENGTH_OFFSET + _HEADER_LENGTH_SIZE
+    _HEADER_VERSION_SIZE = 4
+    _CHIPSET_ID_OFFSET = _HEADER_VERSION_OFFSET + _HEADER_VERSION_SIZE
+    _CHIPSET_ID_SIZE = 2
+    _FLAGS_OFFSET = _CHIPSET_ID_OFFSET + _CHIPSET_ID_SIZE
+    _FLAGS_SIZE = 2
+    _MODULE_VENDOR_OFFSET = _FLAGS_OFFSET + _FLAGS_SIZE
+    _MODULE_VENDOR_SIZE = 4
+    _DATE_OFFSET = _MODULE_VENDOR_OFFSET + _MODULE_VENDOR_SIZE
+    _DATE_SIZE = 4
+    _MODULE_SIZE_OFFSET = _DATE_OFFSET + _DATE_SIZE
+    _MODULE_SIZE_SIZE = 4
+    _RESERVED1_OFFSET = _MODULE_SIZE_OFFSET + _MODULE_SIZE_SIZE
+    _RESERVED1_SIZE = 4
+    _CODE_CONTROL_OFFSET = _RESERVED1_OFFSET + _RESERVED1_SIZE
+    _CODE_CONTROL_SIZE = 4
+    _ERROR_ENTRY_POINT_OFFSET = _CODE_CONTROL_OFFSET + _CODE_CONTROL_SIZE
+    _ERROR_ENTRY_POINT_SIZE = 4
+    _GDT_LIMIT_OFFSET = _ERROR_ENTRY_POINT_OFFSET + _ERROR_ENTRY_POINT_SIZE
+    _GDT_LIMIT_SIZE = 4
+    _GDT_BASE_PTR_OFFSET = _GDT_LIMIT_OFFSET + _GDT_LIMIT_SIZE
+    _GDT_BASE_PTR_SIZE = 4
+    _SEGMENT_SELECTOR_OFFSET = _GDT_BASE_PTR_OFFSET + _GDT_BASE_PTR_SIZE
+    _SEGMENT_SELECTOR_SIZE = 4
+    _ENTRY_POINT_OFFSET = _SEGMENT_SELECTOR_OFFSET + _SEGMENT_SELECTOR_SIZE
+    _ENTRY_POINT_SIZE = 4
+    _RESERVED2_OFFSET = _ENTRY_POINT_OFFSET + _ENTRY_POINT_SIZE
+    _RESERVED2_SIZE = 64
+    _KEY_SIZE_OFFSET = _RESERVED2_OFFSET + _RESERVED2_SIZE
+    _KEY_SIZE_SIZE = 4
+    _SCRATCH_SIZE_OFFSET = _KEY_SIZE_OFFSET + _KEY_SIZE_SIZE
+    _SCRATCH_SIZE_SIZE = 4
+    _RSA_PUBKEY_OFFSET = _SCRATCH_SIZE_OFFSET + _SCRATCH_SIZE_SIZE
+    # need to know _KEY_SIZE to calculate RSA_PUBKEY_SIZE
+    _RSA_PUBEXP_OFFSET = 384
+    _RSA_PUBEXP_SIZE = 4
+    _RSA_SIG_OFFSET = _RSA_PUBEXP_OFFSET + _RSA_PUBEXP_SIZE
+    _RSA_SIG_SIZE = 256
+    _SCRATCH_OFFSET = _RSA_SIG_OFFSET + _RSA_SIG_SIZE
+    # need to know scratch size and file size to calculate UserArea stuff
+
     def __init__ (self, pfile, pmmap=False):
         super (acmParse, self).__init__ (pfile, pmmap)
 
     # public accessor functions
-    # ModuleType is 2 bytes at offset 0
     def ModuleType(self):
-        return self._read_uint16 (0)
+        return self._read_uint16 (self._MODULE_TYPE_OFFSET)
     def ModuleType_Bytes(self):
-        return self._read_bytes (0, 2)
-    # ModuleSubType is 2 bytes at offset 2
+        return self._read_bytes (self._MODULE_TYPE_OFFSET, self._MODULE_TYPE_SIZE)
     def ModuleSubType(self):
-        return self._read_uint16 (2)
+        return self._read_uint16 (self._MODULE_SUBTYPE_OFFSET)
     def ModuleSubType_Bytes(self):
-        return self._read_bytes (2, 2)
-    # HeaderLen is 4 bytes at offset 4
+        return self._read_bytes (self._MODULE_SUBTYPE_OFFSET, self._MODULE_SUBTYPE_OFFSET)
     def HeaderLen(self):
-        return self._read_uint32 (4)
+        return self._read_uint32 (self._HEADER_LENGTH_OFFSET)
     def HeaderLen_Bytes(self):
-        return self._read_bytes (4, 4)
-    # HeaderVersion is 4 bytes at offset 8
+        return self._read_bytes (self._HEADER_LENGTH_OFFSET, self._HEADER_LENGTH_SIZE)
     def HeaderVersion(self):
-        return self._read_uint32 (8)
+        return self._read_uint32 (self._HEADER_VERSION_OFFSET)
     def HeaderVersion_Bytes(self):
-        return self._read_bytes (8, 4)
-    # ChipsetID is 2 bytes at offset 12
+        return self._read_bytes (self._HEADER_VERSION_OFFSET, self._HEADER_VERSION_SIZE)
     def ChipsetID(self):
-        return self._read_uint16 (12)
+        return self._read_uint16 (self._CHIPSET_ID_OFFSET)
     def ChipsetID_Bytes(self):
-        return self._read_bytes (12, 2)
-    # Flags are 2 bytes at offset 14
+        return self._read_bytes (self._CHIPSET_ID_OFFSET, self._CHIPSET_ID_SIZE)
     def Flags(self):
-        return acmFlags (self._read_uint16 (14))
+        return acmFlags (self._read_uint16 (self._FLAGS_OFFSET))
     def Flags_Bytes(self):
-        return self._read_bytes (14, 2)
-    # ModuleVendor is 4 bytes at offset 16
+        return self._read_bytes (self._FLAGS_OFFSET, self._FLAGS_SIZE)
     def ModuleVendor(self):
-        return self._read_uint32 (16)
+        return self._read_uint32 (self._MODULE_VENDOR_OFFSET)
     def ModuleVendor_Bytes(self):
-        return self._read_bytes (16, 4)
-    # Date is 4 bytes at offset 20
+        return self._read_bytes (self._MODULE_VENDOR_OFFSET, self._MODULE_VENDOR_SIZE)
     def Date(self):
-        return self._read_uint32 (20)
+        return self._read_uint32 (self._DATE_OFFSET)
     def DateObj(self):
         self._datebcd = self.Date ()
-        # could not be less efficient, but seems to work
         _year = int (hex (self._datebcd >> 16)[2:])
         _month = int (hex ((self._datebcd >> 8) & 0x0000FF)[2:])
         _day = int (hex (self._datebcd & 0x000000F)[2:])
         return datetime.date (_year, _month, _day)
     def Date_Bytes(self):
-        return self._read_bytes (20, 4)
-    # Size is 4 bytes at offset 24
+        return self._read_bytes (self._DATE_OFFSET, self._DATE_SIZE)
     def Size(self):
-        return self._read_uint32 (24)
+        return self._read_uint32 (self._MODULE_SIZE_OFFSET)
     def Size_Bytes(self):
-        return self._read_bytes (24, 4)
-    # Reserved1 is 4 bytes at offset 28
+        return self._read_bytes (self._MODULE_SIZE_OFFSET, self._MODULE_SIZE_SIZE)
     def Reserved1(self):
-        return self._read_uint32 (28)
+        return self._read_uint32 (self._RESERVED1_OFFSET)
     def Reserved1_Bytes(self):
-        return self._read_bytes (28, 4)
-    # CodeControl is 4 bytes at offset 32
+        return self._read_bytes (self._RESERVED1_OFFSET, self._RESERVED1_SIZE)
     def CodeControl(self):
-        return self._read_uint32 (32)
+        return self._read_uint32 (self._CODE_CONTROL_OFFSET)
     def CodeControl_Bytes(self):
-        return self._read_bytes (32, 4)
-    # ErrorEntryPoint is 4 bytes at offset 36
+        return self._read_bytes (self._CODE_CONTROL_OFFSET, self._CODE_CONTROL_SIZE)
     def ErrorEntryPoint(self):
-        return self._read_uint32 (36)
+        return self._read_uint32 (self._ERROR_ENTRY_POINT_OFFSET)
     def ErrorEntryPoint_Bytes(self):
-        return self._read_bytes (36, 4)
-    # GDTLimit is 4 bytes at offset 40
+        return self._read_bytes (self._ERROR_ENTRY_POINT_OFFSET, self._ERROR_ENTRY_POINT_SIZE)
     def GDTLimit(self):
-        return self._read_uint32 (40)
+        return self._read_uint32 (self._GDT_LIMIT_OFFSET)
     def GDTLimit_Bytes(self):
-        return self._read_bytes (40, 4)
-    # GDTBasePtr is 4 bytes at offset 44
+        return self._read_bytes (self._GDT_LIMIT_OFFSET, self._GDT_LIMIT_SIZE)
     def GDTBasePtr(self):
-        return self._read_uint32 (44)
+        return self._read_uint32 (self._GDT_BASE_PTR_OFFSET)
     def GDTBasePtr_Bytes(self):
-        return self._read_bytes (44, 4)
-    # SegSel is 4 bytes at offset 48
+        return self._read_bytes (self._GDT_BASE_PTR_OFFSET, self._GDT_BASE_PTR_SIZE)
     def SegSel(self):
-        return self._read_uint32 (48)
+        return self._read_uint32 (self._SEGMENT_SELECTOR_OFFSET)
     def SegSel_Bytes(self):
-        return self._read_bytes (48, 4)
-    # EntryPoint is 4 bytes at offset 52
+        return self._read_bytes (self._SEGMENT_SELECTOR_OFFSET, self._SEGMENT_SELECTOR_SIZE)
     def EntryPoint(self):
-        return self._read_uint32 (52)
+        return self._read_uint32 (self._ENTRY_POINT_OFFSET)
     def EntryPoint_Bytes(self):
-        return self._read_bytes (52, 4)
-    # Reserved2 is 64 bytes at offset 56
+        return self._read_bytes (self._ENTRY_POINT_OFFSET, self._ENTRY_POINT_SIZE)
     def Reserved2(self):
-        return self._read_bytes (56, 64)
-    # KeySize is 4 bytes at offset 120
+        return self._read_bytes (self._RESERVED2_OFFSET, self._RESERVED2_SIZE)
     def KeySize(self):
-        return self._read_uint32 (120)
+        return self._read_uint32 (self._KEY_SIZE_OFFSET)
     def KeySize_Bytes(self):
-        return self._read_bytes (120, 4)
-    # ScratchSize is 4 bytes at offset 124
+        return self._read_bytes (self._KEY_SIZE_OFFSET, self._KEY_SIZE_SIZE)
     def ScratchSize(self):
-        return self._read_uint32 (124)
+        return self._read_uint32 (self._SCRATCH_SIZE_OFFSET)
     def ScratchSize_Bytes(self):
-        return self._read_bytes (124, 4)
-    # RSAPubKey is KeySize * 4 bytes at offset 128
+        return self._read_bytes (self._SCRATCH_SIZE_OFFSET, self._SCRATCH_SIZE_SIZE)
     def RSAPubKey(self):
-        return self._read_bytes (128, self.KeySize () * 4)
-    # RSAPubExp is 4 bytes at offset 384
+        return self._read_bytes (self._RSA_PUBKEY_OFFSET,
+                                 self.KeySize () * 4)
     def RSAPubExp(self):
-        return self._read_uint32 (384)
+        return self._read_uint32 (self._RSA_PUBEXP_OFFSET)
     def RSAPubExp_Bytes(self):
-        return self._read_bytes (384, 4)
-    # RSASig is 256 bytes at offset 388
+        return self._read_bytes (self._RSA_PUBEXP_OFFSET, self._RSA_PUBEXP_SIZE)
     def RSASig(self):
-        return self._read_bytes (388, 256)
-    # Scratch is ScratchSize * 4 bytes at offset 644
+        return self._read_bytes (self._RSA_SIG_OFFSET, self._RSA_SIG_SIZE)
     def Scratch(self):
-        return self._read_bytes (644, self.ScratchSize () * 4)
-    # UserArea is the rest of the file starting at offset 644 + ScratchSize * 4
+        return self._read_bytes (self._SCRATCH_OFFSET, self.ScratchSize () * 4)
     def UserArea(self):
-        self._file.seek(0, 2)
-        acmsize = self._file.tell ()
-        start = 644 + self.ScratchSize () * 4
-        return self._read_bytes (start, acmsize - start)
+        _userarea_offset = self._SCRATCH_OFFSET + (self.ScratchSize () * 4)
+        _userarea_size = self._file_size - _userarea_offset
+        return self._read_bytes (_userarea_offset, _userarea_size)
 
 class txtHeap(binParse):
     def __init__ (self, pfile, pbase, psize):
