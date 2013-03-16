@@ -24,51 +24,47 @@ class acmFlags(object):
         return self._flags
 
 class binParse(object):
-    def __init__(self, pfile, dommap=False):
+    def __init__(self, pfile, pmmap=False, poffset=0, psize=0):
         self._file = pfile
-        self._file.seek (0,2)
-        self._file_size = self._file.tell ()
-        self._file.seek (0)
-        self._filemmap = None
-        if dommap:
-            self._filemmap = mmap.mmap (self._file.fileno (), 0, access=mmap.ACCESS_READ)
+        self._offset = poffset
+        self._map_size = psize
+        try:
+            self._file.seek (0,2)
+            self._file_size = self._file.tell ()
+            self._file.seek (0)
+            self._filemmap = None
+        except IOError as e:
+            if not pmmap:
+                raise IOError ('Cannot seek in file: {0}, mmap disabled.'.format (self._file.name));
 
-    # "private" convenience functions
-    def _read_bytes(self, offset, length):
+        if pmmap:
+            self._filemmap = mmap.mmap (self._file.fileno (),
+                                        self._map_size,
+                                        access=mmap.ACCESS_READ,
+                                        offset=self._offset)
+
+    def _read_bytes_raw (self, offset, length):
         if self._filemmap:
             _tmp = self._filemmap [offset : offset + length]
         else:
-            self._file.seek (offset)
+            self._file.seek (self._offset + offset)
             _tmp = self._file.read (length)
+        return _tmp
+    def _read_bytes(self, offset, length):
+        _tmp = self._read_bytes_raw (offset, length)
         inttup = struct.unpack ('<{0}B'.format(length), _tmp)
         return bytearray (inttup)
     def _read_uint8(self, offset):
-        if self._filemmap:
-            _tmp = self._filemmap [offset : offset + 11]
-        else:
-            self._file.seek (offset)
-            _tmp = self._file.read (1)
+        _tmp = self._read_bytes_raw (offset, 1)
         return struct.unpack ('<c', _tmp)[0]
     def _read_uint16(self, offset):
-        if self._filemmap:
-            _tmp = self._filemmap [offset : offset + 2]
-        else:
-            self._file.seek (offset)
-            _tmp = self._file.read (2)
+        _tmp = self._read_bytes_raw (offset, 2)
         return struct.unpack ('<H', _tmp)[0]
     def _read_uint32(self, offset):
-        if self._filemmap:
-            _tmp = self._filemmap [offset : offset + 4]
-        else:
-            self._file.seek (offset)
-            _tmp = self._file.read (4)
+        _tmp = self._read_bytes_raw (offset, 4)
         return struct.unpack ('<I', _tmp)[0]
-    def _read_unit64(self,offset):
-        if self._filemmap:
-            _tmp = self._filemmap [offset : offset + 8]
-        else:
-            self._file.seek (offset)
-            _tmp = self._file.read (8)
+    def _read_uint64(self,offset):
+        _tmp = self._read_bytes_raw (offset, 8)
         return struct.unpack ('<Q', _tmp)[0]
 
 class acmParse(binParse):
