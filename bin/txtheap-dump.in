@@ -9,11 +9,13 @@ import sys
 
 sys.path.insert(1, '@pythondir@/@PACKAGE@')
 
+import pcrutil
 import txt
 
 def main():
     description = 'Dump and optionally pretty-print TXT heap from /dev/mem'
     infile_help = 'file to read as TXT Heap instead of /dev/mem'
+    mmap_help = 'access file through mmap'
     pp_help = 'parse and format binary heap to human readable form'
     ver_help = 'version information'
     ver_str = '%(prog)s: @PACKAGE@ @VERSION@'
@@ -22,18 +24,41 @@ def main():
     parser.add_argument('-v', '--version', help=ver_help, action='version', version=ver_str)
     parser.add_argument('-p', '--pretty', help=pp_help, action='store_true')
     parser.add_argument('-i', '--infile', help=infile_help, default='/dev/mem')
+    parser.add_argument('-m', '--mmap', help=mmap_help, action='store_true')
     args = parser.parse_args()
+
+    if args.infile == '/dev/mem':
+        dev_mem = True
 
     try:
         fd_infile = open (args.infile, 'rb')
     except IOError as e:
         sys.stderr.write ('Error opening {0} for reading: \"{1}\" ... Abort\n'.format(e.filename, e.strerror))
         sys.exit (1)
-        
-    if not args.infile:
-        txtPubRegs = txt.pubConfRegsParse (fd_infile)
-    else:
-        txtPubRegs = txt.pubConfRegsParse (fd_infile, False)
+
+    try:
+        txtPubRegs = txt.pubConfRegsParse (fd_infile, args.mmap, dev_mem)
+    except IOError as e:
+        sys.stderr.write ('Exception reading TXT public config registers: {0}\n'.format (e))
+        sys.exit (1)
+
+    print 'TXT Public Config Registers:'
+    print '  Status:         {0:#0{1}x}'.format (txtPubRegs.Status (), 18)
+    print '  ErrorStatus:    {0:#0{1}x}'.format (txtPubRegs.ErrorStatus (), 18)
+    print '  ErrorCode:      {0:#0{1}x}'.format (txtPubRegs.ErrorCode (), 18)
+    print '  FSBInterface:   {0:#0{1}x}'.format (txtPubRegs.FSBInterface (), 18)
+    print '  DeviceID:       {0:#0{1}x}'.format (txtPubRegs.DeviceID (), 18)
+    print '  QuickPath:      {0:#0{1}x}'.format (txtPubRegs.QuickPath (), 18)
+    print '  SINITBase:      {0:#0{1}x}'.format (txtPubRegs.SINITBase (), 18)
+    print '  SINITSize:      {0:#0{1}x}'.format (txtPubRegs.SINITSize (), 18)
+    print '  MLEJoinBase:    {0:#0{1}x}'.format (txtPubRegs.MLEJoinBase (), 18)
+    print '  HeapBase:       {0:#0{1}x}'.format (txtPubRegs.HeapBase (), 18)
+    print '  HeapSize:       {0:#0{1}x}'.format (txtPubRegs.HeapSize (), 18)
+    print '  DMAProtected:   {0:#0{1}x}'.format (txtPubRegs.HeapSize (), 18)
+    print '  PublicKey:'
+    for _bytestr in pcrutil.prettyprint_bytearray (txtPubRegs.PublicKey_Bytes ()):
+        print "    {0}".format (_bytestr)
+    print '  ExtErrorStatus: {0:#0{1}x}'.format (txtPubRegs.ExtErrorStatus (), 18)
 
     sys.exit (0)
 
