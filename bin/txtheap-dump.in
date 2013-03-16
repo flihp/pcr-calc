@@ -6,6 +6,9 @@
 import argparse
 import exceptions
 import sys
+
+sys.path.insert(1, '@pythondir@/@PACKAGE@')
+
 import txt
 
 def main():
