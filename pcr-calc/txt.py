@@ -216,31 +216,73 @@ class acmParse(binParse):
         _userarea_size = self._file_size - _userarea_offset
         return self._read_bytes (_userarea_offset, _userarea_size)
 
-class txtHeap(binParse):
-    def __init__ (self, pfile, pbase, psize):
-        super (txtHeap, self).__init__ (pfile, False)
-        self._base = pbase
-        self._size = psize
-    def BiosDataSize (self):
-        return self._read_uint64 (self._base)
-
 class pubConfRegsParse(binParse):
-    def __init__(self, pfile, from_mem=True):
-        super (pubConfRegsParse, self).__init__ (pfile, False)
+    _REG_SIZE = 8 # all regs are 64 bits per the spec
+    _TXT_PUB_CONFIG_REGS_BASE = 0xfed30000
+    _TXT_STS_OFFSET = 0x0
+    _TXT_ESTS_OFFSET = 0x008
+    _TXT_ERRORCODE_OFFSET = 0x030
+    _TXT_CMD_RESET_OFFSET = 0x038
+    _TXT_CMD_CLOSEPRIVATE_OFFSET = 0x048
+    _TXT_VER_FSBIF_OFFSET = 0x100
+    _TXT_DIDVID_OFFSET = 0x110
+    _TXT_VER_QPIIF_OFFSET = 0x200
+    _TXT_CMD_UNLOCKMEMCONFIG_OFFSET = 0x218
+    _TXT_SINIT_BASE_OFFSET = 0x270
+    _TXT_SINIT_SIZE_OFFSET = 0x278
+    _TXT_MLE_JOIN_OFFSET = 0x290
+    _TXT_HEAP_BASE_OFFSET = 0x300
+    _TXT_HEAP_SIZE_OFFSET = 0x308
+    _TXT_DPR_OFFSET = 0x330
+    _TXT_CMD_OPEN_LOCALITY1_OFFSET = 0x380
+    _TXT_CMD_CLOSE_LOCALITY1_OFFSET = 0x388
+    _TXT_CMD_OPEN_LOCALITY2_OFFSET = 0x390
+    _TXT_CMD_CLOSE_LOCALITY2_OFFSET = 0x398
+    _TXT_PUBLIC_KEY_OFFSET = 0x400
+    _TXT_CMD_SECRETS_OFFSET = 0x8e0
+    _TXT_CMD_NOSECRETS_OFFSET = 0x8e8
+    _TXT_E2STS_OFFSET = 0xef0
+    def __init__(self, pfile, pmmap=False, from_mem=False):
+        self._mmap = pmmap
+        self._offset = 0
+        self._size = (self._TXT_E2STS_OFFSET + self._REG_SIZE) - self._TXT_STS_OFFSET
         if from_mem:
-            self._TXT_PUB_CONFIG_REGS_BASE = 0xfed30000
-        else:
-            self._TXT_PUB_CONFIG_REGS_BASE = 0x0
-        self._HEAP_BASE_OFFSET = self._TXT_PUB_CONFIG_REGS_BASE + 0x300
-        self._HEAP_SIZE_OFFSET = self._TXT_PUB_CONFIG_REGS_BASE + 0x308
+            self._offset = self._TXT_PUB_CONFIG_REGS_BASE
+        print 'mapping TXT public config registers from offset {0}, size {1}'.format (hex (self._offset), hex (self._size))
+        super (pubConfRegsParse, self).__init__ (pfile, pmmap, poffset=self._offset, psize=self._size)
+    # readable config registers
+    def Status (self):
+        return self._read_uint64 (self._TXT_STS_OFFSET)
+    def ErrorStatus (self):
+        return self._read_uint64 (self._TXT_ESTS_OFFSET)
+    def ErrorCode (self):
+        return self._read_uint64 (self._TXT_ERRORCODE_OFFSET)
+    def FSBInterface (self):
+        return self._read_uint64 (self._TXT_VER_FSBIF_OFFSET)
+    def DeviceID (self):
+        return self._read_uint64 (self._TXT_DIDVID_OFFSET)
+    def QuickPath (self):
+        return self._read_uint64 (self._TXT_VER_QPIIF_OFFSET)
+    def SINITBase (self):
+        return self._read_uint64 (self._TXT_SINIT_BASE_OFFSET)
+    def SINITSize (self):
+        return self._read_uint64 (self._TXT_SINIT_SIZE_OFFSET)
+    def MLEJoinBase (self):
+        return self._read_uint64 (self._TXT_MLE_JOIN_OFFSET)
     def HeapBase (self):
-        return self._read_uint32 (self._HEAP_BASE_OFFSET)
+        return self._read_uint64 (self._TXT_HEAP_BASE_OFFSET)
     def HeapSize (self):
-        return self._read_uint32 (self._HEAP_SIZE_OFFSET)
-    def Heap (self):
-        return txtHeap (self._file, self.HeapBase (), self.HeapSize ())
-    def HeapBytes (self):
-        return self._read_bytes (self.HeapBase (), self.HeapSize ())
+        return self._read_uint64 (self._TXT_HEAP_SIZE_OFFSET)
+    def DMAProtected (self):
+        return self._read_uint64 (self._TXT_DPR_OFFSET)
+    def PublicKey_Bytes (self):
+        _bytes = self._read_bytes (self._TXT_PUBLIC_KEY_OFFSET, 8)
+        _bytes.extend (self._read_bytes (self._TXT_PUBLIC_KEY_OFFSET + 8, 8))
+        _bytes.extend (self._read_bytes (self._TXT_PUBLIC_KEY_OFFSET + 16, 8))
+        _bytes.extend (self._read_bytes (self._TXT_PUBLIC_KEY_OFFSET + 24, 8))
+        return _bytes
+    def ExtErrorStatus (self):
+        return self._read_uint64 (self._TXT_E2STS_OFFSET)
 
 class pcrEmu(object):
     def __init__(self):
