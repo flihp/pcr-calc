@@ -61,6 +61,21 @@ def pp_SinitToMle (sinitMle):
     print '  SinitVtdDmarTableOffset: {0:#0{1}x}'.format (sinitMle.SinitVtdDmarTableOffset (), sinitMle._SINIT_VTD_DMAR_TABLE_OFFSET_LENGTH * 2 + 2)
     print '  ProcScrtmStatus:         {0:#0{1}x}'.format (sinitMle.ProcScrtmStatus (), sinitMle._PROCESSOR_SCRTM_STATUS_LENGTH * 2 + 2)
 
+def pp_OsToSinit (os_sinit):
+    print 'OsToSinit:'
+    print '  Version:          {0:#0{1}x}'.format (os_sinit.Version (), os_sinit._VERSION_LENGTH * 2 + 2)
+    print '  MlePageTableBase: {0:#0{1}x}'.format (os_sinit.MlePageTableBase (), os_sinit._MLE_PAGETABLE_BASE_LENGTH + 2)
+    print '  MleSize:          {0:#0{1}x}'.format (os_sinit.MleSize (), os_sinit._MLE_SIZE_LENGTH * 2 + 2)
+    print '  MleHeaderBase:    {0:#0{1}x}'.format (os_sinit.MleHeaderBase (), os_sinit._MLE_HEADER_BASE_LENGTH * 2 + 2)
+    print '  PmrLowBase:       {0:#0{1}x}'.format (os_sinit.PmrLowBase (), os_sinit._PMR_LOW_BASE_LENGTH * 2 + 2)
+    print '  PmrLowSize:       {0:#0{1}x}'.format (os_sinit.PmrLowSize (), os_sinit._PMR_LOW_SIZE_LENGTH * 2 + 2)
+    print '  PmrHighBase:      {0:#0{1}x}'.format (os_sinit.PmrHighBase (), os_sinit._PMR_HIGH_BASE_LENGTH * 2 + 2)
+    print '  PmrHighSize:      {0:#0{1}x}'.format (os_sinit.PmrHighSize (), os_sinit._PMR_HIGH_SIZE_LENGTH * 2 + 2)
+    print '  LcpPoBase:        {0:#0{1}x}'.format (os_sinit.LcpPoBase (), os_sinit._LCP_PO_BASE_LENGTH * 2 + 2)
+    print '  LcpPoSize:        {0:#0{1}x}'.format (os_sinit.LcpPoSize (), os_sinit._LCP_PO_SIZE_LENGTH * 2 + 2)
+    print '  Capabilities:     {0:#0{1}x}'.format (os_sinit.Capabilities (), os_sinit._CAPABILITIES_LENGTH * 2 + 2)
+    print '  EfiRsdtPointer:   {0:#0{1}x}'.format (os_sinit.EfiRsdtPointer (), os_sinit._EFI_RSDT_POINTER_LENGTH * 2 + 2)
+
 def main():
     description = 'Dump and optionally pretty-print TXT heap from /dev/mem'
     infile_help = 'file to read as TXT Heap instead of /dev/mem'
@@ -96,6 +111,8 @@ def main():
     pp_TxtHeap (heap)
     sinitMle = txt.sinitMleData (heap.SinitMleData ())
     pp_SinitToMle (sinitMle)
+    osSinit = txt.osSinitData (heap.OsSinitData ())
+    pp_OsToSinit (osSinit)
     sys.exit (0)
 
 if __name__ == "__main__":
