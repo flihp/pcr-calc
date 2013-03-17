@@ -12,6 +12,25 @@ sys.path.insert(1, '@pythondir@/@PACKAGE@')
 import pcrutil
 import txt
 
+def pp_PubConfRegs (regs):
+    print 'TXT Public Config Registers:'
+    print '  Status:         {0:#0{1}x}'.format (regs.Status (), 18)
+    print '  ErrorStatus:    {0:#0{1}x}'.format (regs.ErrorStatus (), 18)
+    print '  ErrorCode:      {0:#0{1}x}'.format (regs.ErrorCode (), 18)
+    print '  FSBInterface:   {0:#0{1}x}'.format (regs.FSBInterface (), 18)
+    print '  DeviceID:       {0:#0{1}x}'.format (regs.DeviceID (), 18)
+    print '  QuickPath:      {0:#0{1}x}'.format (regs.QuickPath (), 18)
+    print '  SINITBase:      {0:#0{1}x}'.format (regs.SINITBase (), 18)
+    print '  SINITSize:      {0:#0{1}x}'.format (regs.SINITSize (), 18)
+    print '  MLEJoinBase:    {0:#0{1}x}'.format (regs.MLEJoinBase (), 18)
+    print '  HeapBase:       {0:#0{1}x}'.format (regs.HeapBase (), 18)
+    print '  HeapSize:       {0:#0{1}x}'.format (regs.HeapSize (), 18)
+    print '  DMAProtected:   {0:#0{1}x}'.format (regs.HeapSize (), 18)
+    print '  PublicKey:'
+    for _bytestr in pcrutil.prettyprint_bytearray (regs.PublicKey_Bytes ()):
+        print "    {0}".format (_bytestr)
+    print '  ExtErrorStatus: {0:#0{1}x}'.format (regs.ExtErrorStatus (), 18)
+
 def main():
     description = 'Dump and optionally pretty-print TXT heap from /dev/mem'
     infile_help = 'file to read as TXT Heap instead of /dev/mem'
@@ -42,23 +61,7 @@ def main():
         sys.stderr.write ('Exception reading TXT public config registers: {0}\n'.format (e))
         sys.exit (1)
 
-    print 'TXT Public Config Registers:'
-    print '  Status:         {0:#0{1}x}'.format (txtPubRegs.Status (), 18)
-    print '  ErrorStatus:    {0:#0{1}x}'.format (txtPubRegs.ErrorStatus (), 18)
-    print '  ErrorCode:      {0:#0{1}x}'.format (txtPubRegs.ErrorCode (), 18)
-    print '  FSBInterface:   {0:#0{1}x}'.format (txtPubRegs.FSBInterface (), 18)
-    print '  DeviceID:       {0:#0{1}x}'.format (txtPubRegs.DeviceID (), 18)
-    print '  QuickPath:      {0:#0{1}x}'.format (txtPubRegs.QuickPath (), 18)
-    print '  SINITBase:      {0:#0{1}x}'.format (txtPubRegs.SINITBase (), 18)
-    print '  SINITSize:      {0:#0{1}x}'.format (txtPubRegs.SINITSize (), 18)
-    print '  MLEJoinBase:    {0:#0{1}x}'.format (txtPubRegs.MLEJoinBase (), 18)
-    print '  HeapBase:       {0:#0{1}x}'.format (txtPubRegs.HeapBase (), 18)
-    print '  HeapSize:       {0:#0{1}x}'.format (txtPubRegs.HeapSize (), 18)
-    print '  DMAProtected:   {0:#0{1}x}'.format (txtPubRegs.HeapSize (), 18)
-    print '  PublicKey:'
-    for _bytestr in pcrutil.prettyprint_bytearray (txtPubRegs.PublicKey_Bytes ()):
-        print "    {0}".format (_bytestr)
-    print '  ExtErrorStatus: {0:#0{1}x}'.format (txtPubRegs.ExtErrorStatus (), 18)
+    pp_PubConfRegs (txtPubRegs)
     heap = txt.txtHeap (fd_infile, args.mmap, txtPubRegs.HeapBase (), txtPubRegs.HeapSize ())
     sinitMle = txt.sinitMleData (heap.SinitMleData ())
     print 'SINIT to MLE Data:'
