@@ -303,7 +303,15 @@ class txtHeap (mapParse):
         self._size = size
         print 'mapping TXT heap at offset {0}, length {1}'.format (hex (self._offset), hex (self._size))
         super (txtHeap, self).__init__ (pfile, pmmap, poffset=self._offset, psize=self._size)
+    def _OsMleDataOffset (self):
+        return self.BiosDataSize () + self._BIOS_DATA_SIZE_LENGTH
+    def _OsSinitDataOffset (self):
+        return self.BiosDataSize () + self.OsMleDataSize () + self._OS_SINIT_DATA_SIZE_LENGTH
+    def _SinitMleDataOffset (self):
+        return self.BiosDataSize () + self.OsMleDataSize () + self.OsSinitDataSize () + self._SINIT_MLE_DATA_SIZE_LENGTH
 
+    def Bytes (self):
+        return self._read_bytes (self._BIOS_DATA_SIZE_OFFSET, self.HeapLength ())
     def BiosDataSize (self):
         return self._read_uint64 (self._BIOS_DATA_SIZE_OFFSET)
     def BiosData (self):
@@ -311,15 +319,17 @@ class txtHeap (mapParse):
     def OsMleDataSize (self):
         return self._read_uint64 (self.BiosDataSize ())
     def OsMleData (self):
-        return self._read_bytes (self.BiosDataSize (), self.OsMleDataSize () - self._OS_MLE_DATA_SIZE_LENGTH)
+        return self._read_bytes (self._OsMleDataOffset (), self.OsMleDataSize () - self._OS_MLE_DATA_SIZE_LENGTH)
     def OsSinitDataSize (self):
         return self._read_uint64 (self.BiosDataSize () + self.OsMleDataSize ())
     def OsSinitData (self):
-        return self._read_bytes (self.BiosDataSize () + self.OsMleDataSize () + self._OS_SINIT_DATA_SIZE_LENGTH, self.OsSinitDataSize () - self._OS_SINIT_DATA_SIZE_LENGTH)
+        return self._read_bytes (self._OsSinitDataOffset (), self.OsSinitDataSize () - self._OS_SINIT_DATA_SIZE_LENGTH)
     def SinitMleDataSize (self):
         return self._read_uint64 (self.BiosDataSize () + self.OsMleDataSize () + self.OsSinitDataSize ())
     def SinitMleData (self):
-        return self._read_bytes (self.BiosDataSize () + self.OsMleDataSize () + self.OsSinitDataSize () + self._SINIT_MLE_DATA_SIZE_LENGTH, self.SinitMleDataSize () - self._SINIT_MLE_DATA_SIZE_LENGTH)
+        return self._read_bytes (self._SinitMleDataOffset (), self.SinitMleDataSize () - self._SINIT_MLE_DATA_SIZE_LENGTH)
+    def HeapLength (self):
+        return self.BiosDataSize () + self.OsMleDataSize () + self.OsSinitDataSize () + self.SinitMleDataSize ()
 
 class sinitMleData (binParse):
     _VERSION_OFFSET = 0
