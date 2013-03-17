@@ -288,6 +288,105 @@ class pubConfRegsParse(mapParse):
     def ExtErrorStatus (self):
         return self._read_uint64 (self._TXT_E2STS_OFFSET)
 
+class txtHeap (mapParse):
+    _BIOS_DATA_SIZE_OFFSET = 0x0
+    _BIOS_DATA_SIZE_LENGTH = 0x8
+    _BIOS_DATA_OFFSET = _BIOS_DATA_SIZE_LENGTH
+    _OS_MLE_DATA_SIZE_LENGTH = 0x8
+    _OS_SINIT_DATA_SIZE_LENGTH = 0x8
+    _SINIT_MLE_DATA_SIZE_LENGTH = 0x8
+    # need size from heap
+    # _BIOS_DATA_OFFSET = _BIOS_DATA_SIZE_LENGTH + BiosDataSize ()
+    def __init__(self, pfile, pmmap=False, offset=0x0, size=0x0):
+        self._mmap = pmmap
+        self._offset = offset
+        self._size = size
+        print 'mapping TXT heap at offset {0}, length {1}'.format (hex (self._offset), hex (self._size))
+        super (txtHeap, self).__init__ (pfile, pmmap, poffset=self._offset, psize=self._size)
+
+    def BiosDataSize (self):
+        return self._read_uint64 (self._BIOS_DATA_SIZE_OFFSET)
+    def BiosData (self):
+        return self._read_bytes (self._BIOS_DATA_OFFSET, self.BiosDataSize () - self._BIOS_DATA_SIZE_LENGTH)
+    def OsMleDataSize (self):
+        return self._read_uint64 (self.BiosDataSize ())
+    def OsMleData (self):
+        return self._read_bytes (self.BiosDataSize (), self.OsMleDataSize () - self._OS_MLE_DATA_SIZE_LENGTH)
+    def OsSinitDataSize (self):
+        return self._read_uint64 (self.BiosDataSize () + self.OsMleDataSize ())
+    def OsSinitData (self):
+        return self._read_bytes (self.BiosDataSize () + self.OsMleDataSize () + self._OS_SINIT_DATA_SIZE_LENGTH, self.OsSinitDataSize () - self._OS_SINIT_DATA_SIZE_LENGTH)
+    def SinitMleDataSize (self):
+        return self._read_uint64 (self.BiosDataSize () + self.OsMleDataSize () + self.OsSinitDataSize ())
+    def SinitMleData (self):
+        return self._read_bytes (self.BiosDataSize () + self.OsMleDataSize () + self.OsSinitDataSize () + self._SINIT_MLE_DATA_SIZE_LENGTH, self.SinitMleDataSize () - self._SINIT_MLE_DATA_SIZE_LENGTH)
+
+class sinitMleData (binParse):
+    _VERSION_OFFSET = 0
+    _VERSION_LENGTH = 4
+    _BIOS_ACM_ID_OFFSET = _VERSION_OFFSET + _VERSION_LENGTH
+    _BIOS_ACM_ID_LENGTH = 20
+    _EDX_SENTER_FLAGS_OFFSET = _BIOS_ACM_ID_OFFSET + _BIOS_ACM_ID_LENGTH
+    _EDX_SENTER_FLAGS_LENGTH = 4
+    _MSEG_VALID_OFFSET = _EDX_SENTER_FLAGS_OFFSET + _EDX_SENTER_FLAGS_LENGTH
+    _MSEG_VALID_LENGTH = 8
+    _SINIT_HASH_OFFSET = _MSEG_VALID_OFFSET + _MSEG_VALID_LENGTH
+    _SINIT_HASH_LENGTH = 20
+    _MLE_HASH_OFFSET = _SINIT_HASH_OFFSET + _SINIT_HASH_LENGTH
+    _MLE_HASH_LENGTH = 20
+    _STM_HASH_OFFSET = _MLE_HASH_OFFSET + _MLE_HASH_LENGTH
+    _STM_HASH_LENGTH = 20
+    _LCP_POLICY_HASH_OFFSET = _STM_HASH_OFFSET + _STM_HASH_LENGTH
+    _LCP_POLICY_HASH_LENGTH = 20
+    _POLICY_CONTROL_OFFSET = _LCP_POLICY_HASH_OFFSET + _LCP_POLICY_HASH_LENGTH
+    _POLICY_CONTROL_LENGTH = 4
+    _RLP_WAKEUP_ADDR_OFFSET = _POLICY_CONTROL_OFFSET + _POLICY_CONTROL_LENGTH
+    _RLP_WAKEUP_ADDR_LENGTH = 4
+    _RESERVED_OFFSET = _RLP_WAKEUP_ADDR_OFFSET + _RLP_WAKEUP_ADDR_LENGTH
+    _RESERVED_LENGTH = 4
+    _NUMBER_SINIT_MDRS_OFFSET = _RESERVED_OFFSET + _RESERVED_LENGTH
+    _NUMBER_SINIT_MDRS_LENGTH = 4
+    _SINIT_MDR_TABLE_OFFSET_OFFSET = _NUMBER_SINIT_MDRS_OFFSET + _NUMBER_SINIT_MDRS_LENGTH
+    _SINIT_MDR_TABLE_OFFSET_LENGTH = 4
+    _SINIT_VTD_DMAR_TABLE_SIZE_OFFSET = _SINIT_MDR_TABLE_OFFSET_OFFSET + _SINIT_MDR_TABLE_OFFSET_LENGTH
+    _SINIT_VTD_DMAR_TABLE_SIZE_LENGTH = 4
+    _SINIT_VTD_DMAR_TABLE_OFFSET_OFFSET = _SINIT_VTD_DMAR_TABLE_SIZE_OFFSET + _SINIT_VTD_DMAR_TABLE_SIZE_LENGTH
+    _SINIT_VTD_DMAR_TABLE_OFFSET_LENGTH = 4
+    _PROCESSOR_SCRTM_STATUS_OFFSET = _SINIT_VTD_DMAR_TABLE_OFFSET_OFFSET + _SINIT_VTD_DMAR_TABLE_OFFSET_LENGTH
+    _PROCESSOR_SCRTM_STATUS_LENGTH = 4
+    def __init__(self, pbytes):
+        super (sinitMleData, self).__init__ (None, str (pbytes))
+    def Bytes (self):
+        return self._read_bytes (self._VERSION_OFFSET, self._PROCESSOR_SCRTM_STATUS_OFFSET + self._PROCESSOR_SCRTM_STATUS_LENGTH)
+    def Version (self):
+        return self._read_uint32 (self._VERSION_OFFSET)
+    def BiosAcmId (self):
+        return self._read_bytes (self._BIOS_ACM_ID_OFFSET, self._BIOS_ACM_ID_LENGTH)
+    def EdxSenterFlags (self):
+        return self._read_uint32 (self._EDX_SENTER_FLAGS_OFFSET)
+    def MsegValid (self):
+        return self._read_uint64 (self._MSEG_VALID_OFFSET)
+    def SinitHash (self):
+        return self._read_bytes (self._SINIT_HASH_OFFSET, self._SINIT_HASH_LENGTH)
+    def LcpPolicyHash (self):
+        return self._read_bytes (self._LCP_POLICY_HASH_OFFSET, self._LCP_POLICY_HASH_LENGTH)
+    def PolicyControl (self):
+        return self._read_uint32 (self._POLICY_CONTROL_OFFSET)
+    def RlpWakeupAddr (self):
+        return self._read_uint32 (self._RLP_WAKEUP_ADDR_OFFSET)
+    def Reserved (self):
+        return self._read_uint32 (self._RESERVED_OFFSET)
+    def NumSinitMdrs (self):
+        return self._read_uint32 (self._NUMBER_SINIT_MDRS_OFFSET)
+    def SinitMdrTableOffset (self):
+        return self._read_uint32 (self._SINIT_MDR_TABLE_OFFSET_OFFSET)
+    def SinitVtdDmarTableSize (self):
+        return self._read_uint32 (self._SINIT_VTD_DMAR_TABLE_SIZE_OFFSET)
+    def SinitVtdDmarTableOffset (self):
+        return self._read_uint32 (self._SINIT_VTD_DMAR_TABLE_OFFSET_OFFSET)
+    def ProcScrtmStatus (self):
+        return self._read_uint32 (self._PROCESSOR_SCRTM_STATUS_OFFSET)
+        
 class pcrEmu(object):
     def __init__(self):
         self._value = base64.b16decode(''.join('00' for x in range (0, hashlib.sha1 ().digest_size)))
