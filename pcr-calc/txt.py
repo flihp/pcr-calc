@@ -396,6 +396,60 @@ class sinitMleData (binParse):
         return self._read_uint32 (self._SINIT_VTD_DMAR_TABLE_OFFSET_OFFSET)
     def ProcScrtmStatus (self):
         return self._read_uint32 (self._PROCESSOR_SCRTM_STATUS_OFFSET)
+
+class osSinitData (binParse):
+    _VERSION_OFFSET = 0
+    _VERSION_LENGTH = 4
+    _RESERVED_OFFSET = _VERSION_OFFSET + _VERSION_LENGTH
+    _RESERVED_LENGTH = 4
+    _MLE_PAGETABLE_BASE_OFFSET = _RESERVED_OFFSET + _RESERVED_LENGTH
+    _MLE_PAGETABLE_BASE_LENGTH = 8
+    _MLE_SIZE_OFFSET = _MLE_PAGETABLE_BASE_OFFSET + _MLE_PAGETABLE_BASE_LENGTH
+    _MLE_SIZE_LENGTH = 8
+    _MLE_HEADER_BASE_OFFSET = _MLE_SIZE_OFFSET + _MLE_SIZE_LENGTH
+    _MLE_HEADER_BASE_LENGTH = 8
+    _PMR_LOW_BASE_OFFSET = _MLE_HEADER_BASE_OFFSET + _MLE_HEADER_BASE_LENGTH
+    _PMR_LOW_BASE_LENGTH = 8
+    _PMR_LOW_SIZE_OFFSET = _PMR_LOW_BASE_OFFSET + _PMR_LOW_BASE_LENGTH
+    _PMR_LOW_SIZE_LENGTH = 8
+    _PMR_HIGH_BASE_OFFSET = _PMR_LOW_SIZE_OFFSET + _PMR_LOW_SIZE_LENGTH
+    _PMR_HIGH_BASE_LENGTH = 8
+    _PMR_HIGH_SIZE_OFFSET = _PMR_HIGH_BASE_OFFSET + _PMR_HIGH_BASE_LENGTH
+    _PMR_HIGH_SIZE_LENGTH = 8
+    _LCP_PO_BASE_OFFSET = _PMR_HIGH_SIZE_OFFSET + _PMR_HIGH_SIZE_LENGTH
+    _LCP_PO_BASE_LENGTH = 8
+    _LCP_PO_SIZE_OFFSET = _LCP_PO_BASE_OFFSET + _LCP_PO_BASE_LENGTH
+    _LCP_PO_SIZE_LENGTH = 8
+    _CAPABILITIES_OFFSET = _LCP_PO_SIZE_OFFSET + _LCP_PO_SIZE_LENGTH
+    _CAPABILITIES_LENGTH = 4
+    _EFI_RSDT_POINTER_OFFSET = _CAPABILITIES_OFFSET + _CAPABILITIES_LENGTH
+    _EFI_RSDT_POINTER_LENGTH = 8
+    def __init__(self, pbytes):
+        super (osSinitData, self).__init__ (None, str (pbytes))
+    def Version (self):
+        return self._read_uint32 (self._VERSION_OFFSET)
+    def MlePageTableBase (self):
+        return self._read_uint64 (self._MLE_PAGETABLE_BASE_OFFSET)
+    def MleSize (self):
+        return self._read_uint64 (self._MLE_SIZE_OFFSET)
+    def MleHeaderBase (self):
+        return self._read_uint64 (self._MLE_HEADER_BASE_OFFSET)
+    def PmrLowBase (self):
+        return self._read_uint64 (self._PMR_LOW_BASE_OFFSET)
+    def PmrLowSize (self):
+        return self._read_uint64 (self._PMR_LOW_SIZE_OFFSET)
+    def PmrHighBase (self):
+        return self._read_uint64 (self._PMR_HIGH_BASE_OFFSET)
+    def PmrHighSize (self):
+        return self._read_uint64 (self._PMR_HIGH_SIZE_OFFSET)
+    def LcpPoBase (self):
+        return self._read_uint64 (self._LCP_PO_BASE_OFFSET)
+    def LcpPoSize (self):
+        return self._read_uint64 (self._LCP_PO_SIZE_OFFSET)
+    def Capabilities (self):
+        return self._read_uint32 (self._CAPABILITIES_OFFSET)
+    def EfiRsdtPointer (self):
+        return self._read_uint64 (self._EFI_RSDT_POINTER_OFFSET)
         
 class pcrEmu(object):
     def __init__(self):
