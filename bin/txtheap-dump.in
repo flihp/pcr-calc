@@ -38,6 +38,29 @@ def pp_TxtHeap (heap):
     print '  OsSinitDataSize:        {0:#0{1}x}'.format (heap.OsSinitDataSize (), heap._OS_SINIT_DATA_SIZE_LENGTH + 2)
     print '  OsMleDataSize:          {0:#0{1}x}'.format (heap.OsMleDataSize (), heap._OS_MLE_DATA_SIZE_LENGTH + 2)
 
+def pp_SinitToMle (sinitMle):
+    print 'SINIT to MLE Data:'
+    print '  Version:                 {0:#0{1}x}'.format (sinitMle.Version (), sinitMle._VERSION_LENGTH * 2 + 2)
+    print '  BiosAcmId:'
+    for _bytestr in pcrutil.prettyprint_bytearray (sinitMle.BiosAcmId ()):
+        print '    {0}'.format (_bytestr)
+    print '  EdxSenterFlags:          {0:#0{1}x}'.format (sinitMle.EdxSenterFlags (), sinitMle._EDX_SENTER_FLAGS_LENGTH * 2 + 2)
+    print '  MsegValid:               {0:#0{1}x}'.format (sinitMle.MsegValid (), sinitMle._MSEG_VALID_LENGTH * 2 + 2)
+    print '  SinitHash:'
+    for _bytestr in pcrutil.prettyprint_bytearray (sinitMle.SinitHash ()):
+        print '    {0}'.format (_bytestr)
+    print '  LcpPolicyHash:'
+    for _bytestr in pcrutil.prettyprint_bytearray (sinitMle.LcpPolicyHash ()):
+        print '    {0}'.format (_bytestr)
+    print '  PolicyControl:           {0:#0{1}x}'.format (sinitMle.PolicyControl (), sinitMle._POLICY_CONTROL_LENGTH * 2 + 2)
+    print '  RlpWakeupAddr:           {0:#0{1}x}'.format (sinitMle.RlpWakeupAddr (), sinitMle._RLP_WAKEUP_ADDR_LENGTH * 2 + 2)
+    print '  Reserved:                {0:#0{1}x}'.format (sinitMle.Reserved (), sinitMle._RESERVED_LENGTH * 2 + 2)
+    print '  NumSinitMdrs:            {0:#0{1}x}'.format (sinitMle.NumSinitMdrs (), sinitMle._NUMBER_SINIT_MDRS_LENGTH * 2 + 2)
+    print '  SinitMdrTableOffset:     {0:#0{1}x}'.format (sinitMle.SinitMdrTableOffset (), sinitMle._SINIT_MDR_TABLE_OFFSET_LENGTH * 2 + 2)
+    print '  SinitVtdDmarTableSize:   {0:#0{1}x}'.format (sinitMle.SinitVtdDmarTableSize (), sinitMle._SINIT_VTD_DMAR_TABLE_SIZE_LENGTH * 2 + 2)
+    print '  SinitVtdDmarTableOffset: {0:#0{1}x}'.format (sinitMle.SinitVtdDmarTableOffset (), sinitMle._SINIT_VTD_DMAR_TABLE_OFFSET_LENGTH * 2 + 2)
+    print '  ProcScrtmStatus:         {0:#0{1}x}'.format (sinitMle.ProcScrtmStatus (), sinitMle._PROCESSOR_SCRTM_STATUS_LENGTH * 2 + 2)
+
 def main():
     description = 'Dump and optionally pretty-print TXT heap from /dev/mem'
     infile_help = 'file to read as TXT Heap instead of /dev/mem'
@@ -72,32 +95,7 @@ def main():
     heap = txt.txtHeap (fd_infile, args.mmap, txtPubRegs.HeapBase (), txtPubRegs.HeapSize ())
     pp_TxtHeap (heap)
     sinitMle = txt.sinitMleData (heap.SinitMleData ())
-    print 'SINIT to MLE Data:'
-    print '  Bytes:'
-    for _bytestr in pcrutil.prettyprint_bytearray (sinitMle.Bytes ()):
-        print "    {0}".format (_bytestr)
-    
-    print '  Version:                 {0:#0{1}x}'.format (sinitMle.Version (), sinitMle._VERSION_LENGTH + 2)
-    print '  BiosAcmId:'
-    for _bytestr in pcrutil.prettyprint_bytearray (sinitMle.BiosAcmId ()):
-        print '    {0}'.format (_bytestr)
-    print '  EdxSenterFlags:          {0:#0{1}x}'.format (sinitMle.EdxSenterFlags (), sinitMle._EDX_SENTER_FLAGS_LENGTH + 2)
-    print '  MsegValid:               {0:#0{1}x}'.format (sinitMle.MsegValid (), sinitMle._MSEG_VALID_LENGTH + 2)
-    print '  SinitHash:'
-    for _bytestr in pcrutil.prettyprint_bytearray (sinitMle.SinitHash ()):
-        print '    {0}'.format (_bytestr)
-    print '  LcpPolicyHash:'
-    for _bytestr in pcrutil.prettyprint_bytearray (sinitMle.LcpPolicyHash ()):
-        print '    {0}'.format (_bytestr)
-    print '  PolicyControl:           {0:#0{1}x}'.format (sinitMle.PolicyControl (), sinitMle._POLICY_CONTROL_LENGTH + 2)
-    print '  RlpWakeupAddr:           {0:#0{1}x}'.format (sinitMle.RlpWakeupAddr (), sinitMle._RLP_WAKEUP_ADDR_LENGTH + 2)
-    print '  Reserved:                {0:#0{1}x}'.format (sinitMle.Reserved (), sinitMle._RESERVED_LENGTH + 2)
-    print '  NumSinitMdrs:            {0:#0{1}x}'.format (sinitMle.NumSinitMdrs (), sinitMle._NUMBER_SINIT_MDRS_LENGTH + 2)
-    print '  SinitMdrTableOffset:     {0:#0{1}x}'.format (sinitMle.SinitMdrTableOffset (), sinitMle._SINIT_MDR_TABLE_OFFSET_LENGTH + 2)
-    print '  SinitVtdDmarTableSize:   {0:#0{1}x}'.format (sinitMle.SinitVtdDmarTableSize (), sinitMle._SINIT_VTD_DMAR_TABLE_SIZE_LENGTH + 2)
-    print '  SinitVtdDmarTableOffset: {0:#0{1}x}'.format (sinitMle.SinitVtdDmarTableOffset (), sinitMle._SINIT_VTD_DMAR_TABLE_OFFSET_LENGTH + 2)
-    print '  ProcScrtmStatus:         {0:#0{1}x}'.format (sinitMle.ProcScrtmStatus (), sinitMle._PROCESSOR_SCRTM_STATUS_LENGTH + 2)
-
+    pp_SinitToMle (sinitMle)
     sys.exit (0)
 
 if __name__ == "__main__":
