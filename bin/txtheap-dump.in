@@ -31,6 +31,13 @@ def pp_PubConfRegs (regs):
         print "    {0}".format (_bytestr)
     print '  ExtErrorStatus: {0:#0{1}x}'.format (regs.ExtErrorStatus (), 18)
 
+def pp_TxtHeap (heap):
+    print 'TXT Heap Data:'
+    print '  BiosDataSize:           {0:#0{1}x}'.format (heap.BiosDataSize (), heap._BIOS_DATA_SIZE_LENGTH + 2)
+    print '  OsMleDataSize:          {0:#0{1}x}'.format (heap.OsMleDataSize (), heap._OS_MLE_DATA_SIZE_LENGTH + 2)
+    print '  OsSinitDataSize:        {0:#0{1}x}'.format (heap.OsSinitDataSize (), heap._OS_SINIT_DATA_SIZE_LENGTH + 2)
+    print '  OsMleDataSize:          {0:#0{1}x}'.format (heap.OsMleDataSize (), heap._OS_MLE_DATA_SIZE_LENGTH + 2)
+
 def main():
     description = 'Dump and optionally pretty-print TXT heap from /dev/mem'
     infile_help = 'file to read as TXT Heap instead of /dev/mem'
@@ -63,6 +70,7 @@ def main():
 
     pp_PubConfRegs (txtPubRegs)
     heap = txt.txtHeap (fd_infile, args.mmap, txtPubRegs.HeapBase (), txtPubRegs.HeapSize ())
+    pp_TxtHeap (heap)
     sinitMle = txt.sinitMleData (heap.SinitMleData ())
     print 'SINIT to MLE Data:'
     print '  Bytes:'
