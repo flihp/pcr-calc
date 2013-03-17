@@ -24,25 +24,8 @@ class acmFlags(object):
         return self._flags
 
 class binParse(object):
-    def __init__(self, pfile, pmmap=False, poffset=0, psize=0):
-        self._file = pfile
-        self._offset = poffset
-        self._map_size = psize
-        try:
-            self._file.seek (0,2)
-            self._file_size = self._file.tell ()
-            self._file.seek (0)
-            self._filemmap = None
-        except IOError as e:
-            if not pmmap:
-                raise IOError ('Cannot seek in file: {0}, mmap disabled.'.format (self._file.name));
-
-        if pmmap:
-            self._filemmap = mmap.mmap (self._file.fileno (),
-                                        self._map_size,
-                                        access=mmap.ACCESS_READ,
-                                        offset=self._offset)
-
+    def __init__ (self, pfile, pmap=None):
+        self._filemmap = pmap
     def _read_bytes_raw (self, offset, length):
         if self._filemmap:
             _tmp = self._filemmap [offset : offset + length]
@@ -67,7 +50,28 @@ class binParse(object):
         _tmp = self._read_bytes_raw (offset, 8)
         return struct.unpack ('<Q', _tmp)[0]
 
-class acmParse(binParse):
+class mapParse(binParse):
+    def __init__(self, pfile, pmmap=False, poffset=0, psize=0):
+        self._file = pfile
+        self._offset = poffset
+        self._map_size = psize
+        try:
+            self._file.seek (0,2)
+            self._file_size = self._file.tell ()
+            self._file.seek (0)
+            self._filemmap = None
+        except IOError as e:
+            if not pmmap:
+                raise IOError ('Cannot seek in file: {0}, mmap disabled.'.format (self._file.name));
+
+        if pmmap:
+            self._filemmap = mmap.mmap (self._file.fileno (),
+                                        self._map_size,
+                                        access=mmap.ACCESS_READ,
+                                        offset=self._offset)
+        super (mapParse, self).__init__ (self._file, self._filemmap)
+
+class acmParse(mapParse):
     # offsets & sizes from MLE dev guide appendix A.1, table 3
     _MODULE_TYPE_OFFSET = 0
     _MODULE_TYPE_SIZE = 2
@@ -216,7 +220,7 @@ class acmParse(binParse):
         _userarea_size = self._file_size - _userarea_offset
         return self._read_bytes (_userarea_offset, _userarea_size)
 
-class pubConfRegsParse(binParse):
+class pubConfRegsParse(mapParse):
     _REG_SIZE = 8 # all regs are 64 bits per the spec
     _TXT_PUB_CONFIG_REGS_BASE = 0xfed30000
     _TXT_STS_OFFSET = 0x0
