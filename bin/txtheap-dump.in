@@ -106,13 +106,24 @@ def main():
         sys.stderr.write ('Exception reading TXT public config registers: {0}\n'.format (e))
         sys.exit (1)
 
-    pp_PubConfRegs (txtPubRegs)
-    heap = txt.txtHeap (fd_infile, args.mmap, txtPubRegs.HeapBase (), txtPubRegs.HeapSize ())
-    pp_TxtHeap (heap)
-    sinitMle = txt.sinitMleData (heap.SinitMleData ())
-    pp_SinitToMle (sinitMle)
-    osSinit = txt.osSinitData (heap.OsSinitData ())
-    pp_OsToSinit (osSinit)
+    try:
+        heap = txt.txtHeap (fd_infile, args.mmap, txtPubRegs.HeapBase (), txtPubRegs.HeapSize ())
+    except IOError as e:
+        sys.stderr.write (('Exception reading TXT Heap: {0}').format (e))
+        sys.exit (1)
+
+    if args.pretty:
+        pp_PubConfRegs (txtPubRegs)
+        pp_TxtHeap (heap)
+
+        sinitMle = txt.sinitMleData (heap.SinitMleData ())
+        pp_SinitToMle (sinitMle)
+
+        osSinit = txt.osSinitData (heap.OsSinitData ())
+        pp_OsToSinit (osSinit)
+    else:
+        sys.stdout.write (heap.Bytes ())
+
     sys.exit (0)
 
 if __name__ == "__main__":
