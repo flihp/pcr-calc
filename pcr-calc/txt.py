@@ -26,6 +26,12 @@ class acmFlags(object):
 class binParse(object):
     def __init__ (self, pfile, pmap=None):
         self._filemmap = pmap
+        self._unpack_int = {
+            1 : self._unpack_uint8,
+            2 : self._unpack_uint16,
+            4 : self._unpack_uint32,
+            8 : self._unpack_uint64,
+            }
     def _read_bytes_raw (self, offset, length):
         if self._filemmap:
             _tmp = self._filemmap [offset : offset + length]
@@ -37,18 +43,17 @@ class binParse(object):
         _tmp = self._read_bytes_raw (offset, length)
         inttup = struct.unpack ('<{0}B'.format(length), _tmp)
         return bytearray (inttup)
-    def _read_uint8(self, offset):
-        _tmp = self._read_bytes_raw (offset, 1)
-        return struct.unpack ('<c', _tmp)[0]
-    def _read_uint16(self, offset):
-        _tmp = self._read_bytes_raw (offset, 2)
-        return struct.unpack ('<H', _tmp)[0]
-    def _read_uint32(self, offset):
-        _tmp = self._read_bytes_raw (offset, 4)
-        return struct.unpack ('<I', _tmp)[0]
-    def _read_uint64(self,offset):
-        _tmp = self._read_bytes_raw (offset, 8)
-        return struct.unpack ('<Q', _tmp)[0]
+    def _read_uint (self, offset, length):
+        _tmp = self._read_bytes_raw (offset, length)
+        return self._unpack_int [length] (_tmp)
+    def _unpack_uint8 (self, data):
+        return struct.unpack ('<c', data)[0]
+    def _unpack_uint16 (self, data):
+        return struct.unpack ('<H', data)[0]
+    def _unpack_uint32 (self, data):
+        return struct.unpack ('<I', data)[0]
+    def _unpack_uint64 (self, data):
+        return struct.unpack ('<Q', data)[0]
 
 class mapParse(binParse):
     def __init__(self, pfile, pmmap=False, poffset=0, psize=0):
@@ -125,35 +130,35 @@ class acmParse(mapParse):
 
     # public accessor functions
     def ModuleType(self):
-        return self._read_uint16 (self._MODULE_TYPE_OFFSET)
+        return self._read_uint (self._MODULE_TYPE_OFFSET, self._MODULE_TYPE_SIZE)
     def ModuleType_Bytes(self):
         return self._read_bytes (self._MODULE_TYPE_OFFSET, self._MODULE_TYPE_SIZE)
     def ModuleSubType(self):
-        return self._read_uint16 (self._MODULE_SUBTYPE_OFFSET)
+        return self._read_uint (self._MODULE_SUBTYPE_OFFSET, self._MODULE_SUBTYPE_SIZE)
     def ModuleSubType_Bytes(self):
         return self._read_bytes (self._MODULE_SUBTYPE_OFFSET, self._MODULE_SUBTYPE_OFFSET)
     def HeaderLen(self):
-        return self._read_uint32 (self._HEADER_LENGTH_OFFSET)
+        return self._read_uint (self._HEADER_LENGTH_OFFSET, self._HEADER_LENGTH_SIZE)
     def HeaderLen_Bytes(self):
         return self._read_bytes (self._HEADER_LENGTH_OFFSET, self._HEADER_LENGTH_SIZE)
     def HeaderVersion(self):
-        return self._read_uint32 (self._HEADER_VERSION_OFFSET)
+        return self._read_uint (self._HEADER_VERSION_OFFSET, self._HEADER_VERSION_SIZE)
     def HeaderVersion_Bytes(self):
         return self._read_bytes (self._HEADER_VERSION_OFFSET, self._HEADER_VERSION_SIZE)
     def ChipsetID(self):
-        return self._read_uint16 (self._CHIPSET_ID_OFFSET)
+        return self._read_uint (self._CHIPSET_ID_OFFSET, self._CHIPSET_ID_SIZE)
     def ChipsetID_Bytes(self):
         return self._read_bytes (self._CHIPSET_ID_OFFSET, self._CHIPSET_ID_SIZE)
     def Flags(self):
-        return acmFlags (self._read_uint16 (self._FLAGS_OFFSET))
+        return acmFlags (self._read_uint (self._FLAGS_OFFSET, self._FLAGS_SIZE))
     def Flags_Bytes(self):
         return self._read_bytes (self._FLAGS_OFFSET, self._FLAGS_SIZE)
     def ModuleVendor(self):
-        return self._read_uint32 (self._MODULE_VENDOR_OFFSET)
+        return self._read_uint (self._MODULE_VENDOR_OFFSET, self._MODULE_VENDOR_SIZE)
     def ModuleVendor_Bytes(self):
         return self._read_bytes (self._MODULE_VENDOR_OFFSET, self._MODULE_VENDOR_SIZE)
     def Date(self):
-        return self._read_uint32 (self._DATE_OFFSET)
+        return self._read_uint (self._DATE_OFFSET, self._DATE_SIZE)
     def DateObj(self):
         self._datebcd = self.Date ()
         _year = int (hex (self._datebcd >> 16)[2:])
@@ -163,52 +168,52 @@ class acmParse(mapParse):
     def Date_Bytes(self):
         return self._read_bytes (self._DATE_OFFSET, self._DATE_SIZE)
     def Size(self):
-        return self._read_uint32 (self._MODULE_SIZE_OFFSET)
+        return self._read_uint (self._MODULE_SIZE_OFFSET, self._MODULE_SIZE_SIZE)
     def Size_Bytes(self):
         return self._read_bytes (self._MODULE_SIZE_OFFSET, self._MODULE_SIZE_SIZE)
     def Reserved1(self):
-        return self._read_uint32 (self._RESERVED1_OFFSET)
+        return self._read_uint (self._RESERVED1_OFFSET, self._RESERVED1_SIZE)
     def Reserved1_Bytes(self):
         return self._read_bytes (self._RESERVED1_OFFSET, self._RESERVED1_SIZE)
     def CodeControl(self):
-        return self._read_uint32 (self._CODE_CONTROL_OFFSET)
+        return self._read_uint (self._CODE_CONTROL_OFFSET, self._CODE_CONTROL_SIZE)
     def CodeControl_Bytes(self):
         return self._read_bytes (self._CODE_CONTROL_OFFSET, self._CODE_CONTROL_SIZE)
     def ErrorEntryPoint(self):
-        return self._read_uint32 (self._ERROR_ENTRY_POINT_OFFSET)
+        return self._read_uint (self._ERROR_ENTRY_POINT_OFFSET, self._ERROR_ENTRY_POINT_SIZE)
     def ErrorEntryPoint_Bytes(self):
         return self._read_bytes (self._ERROR_ENTRY_POINT_OFFSET, self._ERROR_ENTRY_POINT_SIZE)
     def GDTLimit(self):
-        return self._read_uint32 (self._GDT_LIMIT_OFFSET)
+        return self._read_uint (self._GDT_LIMIT_OFFSET, self._GDT_LIMIT_SIZE)
     def GDTLimit_Bytes(self):
         return self._read_bytes (self._GDT_LIMIT_OFFSET, self._GDT_LIMIT_SIZE)
     def GDTBasePtr(self):
-        return self._read_uint32 (self._GDT_BASE_PTR_OFFSET)
+        return self._read_uint (self._GDT_BASE_PTR_OFFSET, self._GDT_BASE_PTR_SIZE)
     def GDTBasePtr_Bytes(self):
         return self._read_bytes (self._GDT_BASE_PTR_OFFSET, self._GDT_BASE_PTR_SIZE)
     def SegSel(self):
-        return self._read_uint32 (self._SEGMENT_SELECTOR_OFFSET)
+        return self._read_uint (self._SEGMENT_SELECTOR_OFFSET, self._SEGMENT_SELECTOR_SIZE)
     def SegSel_Bytes(self):
         return self._read_bytes (self._SEGMENT_SELECTOR_OFFSET, self._SEGMENT_SELECTOR_SIZE)
     def EntryPoint(self):
-        return self._read_uint32 (self._ENTRY_POINT_OFFSET)
+        return self._read_uint (self._ENTRY_POINT_OFFSET, self._ENTRY_POINT_SIZE)
     def EntryPoint_Bytes(self):
         return self._read_bytes (self._ENTRY_POINT_OFFSET, self._ENTRY_POINT_SIZE)
     def Reserved2(self):
         return self._read_bytes (self._RESERVED2_OFFSET, self._RESERVED2_SIZE)
     def KeySize(self):
-        return self._read_uint32 (self._KEY_SIZE_OFFSET)
+        return self._read_uint (self._KEY_SIZE_OFFSET, self._KEY_SIZE_SIZE)
     def KeySize_Bytes(self):
         return self._read_bytes (self._KEY_SIZE_OFFSET, self._KEY_SIZE_SIZE)
     def ScratchSize(self):
-        return self._read_uint32 (self._SCRATCH_SIZE_OFFSET)
+        return self._read_uint (self._SCRATCH_SIZE_OFFSET, self._SCRATCH_SIZE_SIZE)
     def ScratchSize_Bytes(self):
         return self._read_bytes (self._SCRATCH_SIZE_OFFSET, self._SCRATCH_SIZE_SIZE)
     def RSAPubKey(self):
         return self._read_bytes (self._RSA_PUBKEY_OFFSET,
                                  self.KeySize () * 4)
     def RSAPubExp(self):
-        return self._read_uint32 (self._RSA_PUBEXP_OFFSET)
+        return self._read_uint (self._RSA_PUBEXP_OFFSET, self._RSA_PUBEXP_SIZE)
     def RSAPubExp_Bytes(self):
         return self._read_bytes (self._RSA_PUBEXP_OFFSET, self._RSA_PUBEXP_SIZE)
     def RSASig(self):
@@ -255,29 +260,29 @@ class pubConfRegsParse(mapParse):
         super (pubConfRegsParse, self).__init__ (pfile, pmmap, poffset=self._offset, psize=self._size)
     # readable config registers
     def Status (self):
-        return self._read_uint64 (self._TXT_STS_OFFSET)
+        return self._read_uint (self._TXT_STS_OFFSET, self._REG_SIZE)
     def ErrorStatus (self):
-        return self._read_uint64 (self._TXT_ESTS_OFFSET)
+        return self._read_uint (self._TXT_ESTS_OFFSET, self._REG_SIZE)
     def ErrorCode (self):
-        return self._read_uint64 (self._TXT_ERRORCODE_OFFSET)
+        return self._read_uint (self._TXT_ERRORCODE_OFFSET, self._REG_SIZE)
     def FSBInterface (self):
-        return self._read_uint64 (self._TXT_VER_FSBIF_OFFSET)
+        return self._read_uint (self._TXT_VER_FSBIF_OFFSET, self._REG_SIZE)
     def DeviceID (self):
-        return self._read_uint64 (self._TXT_DIDVID_OFFSET)
+        return self._read_uint (self._TXT_DIDVID_OFFSET, self._REG_SIZE)
     def QuickPath (self):
-        return self._read_uint64 (self._TXT_VER_QPIIF_OFFSET)
+        return self._read_uint (self._TXT_VER_QPIIF_OFFSET, self._REG_SIZE)
     def SINITBase (self):
-        return self._read_uint64 (self._TXT_SINIT_BASE_OFFSET)
+        return self._read_uint (self._TXT_SINIT_BASE_OFFSET, self._REG_SIZE)
     def SINITSize (self):
-        return self._read_uint64 (self._TXT_SINIT_SIZE_OFFSET)
+        return self._read_uint (self._TXT_SINIT_SIZE_OFFSET, self._REG_SIZE)
     def MLEJoinBase (self):
-        return self._read_uint64 (self._TXT_MLE_JOIN_OFFSET)
+        return self._read_uint (self._TXT_MLE_JOIN_OFFSET, self._REG_SIZE)
     def HeapBase (self):
-        return self._read_uint64 (self._TXT_HEAP_BASE_OFFSET)
+        return self._read_uint (self._TXT_HEAP_BASE_OFFSET, self._REG_SIZE)
     def HeapSize (self):
-        return self._read_uint64 (self._TXT_HEAP_SIZE_OFFSET)
+        return self._read_uint (self._TXT_HEAP_SIZE_OFFSET, self._REG_SIZE)
     def DMAProtected (self):
-        return self._read_uint64 (self._TXT_DPR_OFFSET)
+        return self._read_uint (self._TXT_DPR_OFFSET, self._REG_SIZE)
     def PublicKey_Bytes (self):
         _bytes = self._read_bytes (self._TXT_PUBLIC_KEY_OFFSET, 8)
         _bytes.extend (self._read_bytes (self._TXT_PUBLIC_KEY_OFFSET + 8, 8))
@@ -285,7 +290,7 @@ class pubConfRegsParse(mapParse):
         _bytes.extend (self._read_bytes (self._TXT_PUBLIC_KEY_OFFSET + 24, 8))
         return _bytes
     def ExtErrorStatus (self):
-        return self._read_uint64 (self._TXT_E2STS_OFFSET)
+        return self._read_uint (self._TXT_E2STS_OFFSET, self._REG_SIZE)
 
 class txtHeap (mapParse):
     _BIOS_DATA_SIZE_OFFSET = 0x0
@@ -311,19 +316,19 @@ class txtHeap (mapParse):
     def Bytes (self):
         return self._read_bytes (self._BIOS_DATA_SIZE_OFFSET, self.HeapLength ())
     def BiosDataSize (self):
-        return self._read_uint64 (self._BIOS_DATA_SIZE_OFFSET)
+        return self._read_uint (self._BIOS_DATA_SIZE_OFFSET, self._BIOS_DATA_SIZE_LENGTH)
     def BiosData (self):
         return self._read_bytes (self._BIOS_DATA_OFFSET, self.BiosDataSize () - self._BIOS_DATA_SIZE_LENGTH)
     def OsMleDataSize (self):
-        return self._read_uint64 (self.BiosDataSize ())
+        return self._read_uint (self.BiosDataSize (),self._OS_MLE_DATA_SIZE_LENGTH)
     def OsMleData (self):
         return self._read_bytes (self._OsMleDataOffset (), self.OsMleDataSize () - self._OS_MLE_DATA_SIZE_LENGTH)
     def OsSinitDataSize (self):
-        return self._read_uint64 (self.BiosDataSize () + self.OsMleDataSize ())
+        return self._read_uint (self.BiosDataSize () + self.OsMleDataSize (), self._OS_SINIT_DATA_SIZE_LENGTH)
     def OsSinitData (self):
         return self._read_bytes (self._OsSinitDataOffset (), self.OsSinitDataSize () - self._OS_SINIT_DATA_SIZE_LENGTH)
     def SinitMleDataSize (self):
-        return self._read_uint64 (self.BiosDataSize () + self.OsMleDataSize () + self.OsSinitDataSize ())
+        return self._read_uint (self.BiosDataSize () + self.OsMleDataSize () + self.OsSinitDataSize (), self._SINIT_MLE_DATA_SIZE_LENGTH)
     def SinitMleData (self):
         return self._read_bytes (self._SinitMleDataOffset (), self.SinitMleDataSize () - self._SINIT_MLE_DATA_SIZE_LENGTH)
     def HeapLength (self):
@@ -367,33 +372,33 @@ class sinitMleData (binParse):
     def Bytes (self):
         return self._read_bytes (self._VERSION_OFFSET, self._PROCESSOR_SCRTM_STATUS_OFFSET + self._PROCESSOR_SCRTM_STATUS_LENGTH)
     def Version (self):
-        return self._read_uint32 (self._VERSION_OFFSET)
+        return self._read_uint (self._VERSION_OFFSET, self._VERSION_LENGTH)
     def BiosAcmId (self):
         return self._read_bytes (self._BIOS_ACM_ID_OFFSET, self._BIOS_ACM_ID_LENGTH)
     def EdxSenterFlags (self):
-        return self._read_uint32 (self._EDX_SENTER_FLAGS_OFFSET)
+        return self._read_uint (self._EDX_SENTER_FLAGS_OFFSET, self._EDX_SENTER_FLAGS_LENGTH)
     def MsegValid (self):
-        return self._read_uint64 (self._MSEG_VALID_OFFSET)
+        return self._read_uint (self._MSEG_VALID_OFFSET, self._MSEG_VALID_LENGTH)
     def SinitHash (self):
         return self._read_bytes (self._SINIT_HASH_OFFSET, self._SINIT_HASH_LENGTH)
     def LcpPolicyHash (self):
         return self._read_bytes (self._LCP_POLICY_HASH_OFFSET, self._LCP_POLICY_HASH_LENGTH)
     def PolicyControl (self):
-        return self._read_uint32 (self._POLICY_CONTROL_OFFSET)
+        return self._read_uint (self._POLICY_CONTROL_OFFSET, self._POLICY_CONTROL_LENGTH)
     def RlpWakeupAddr (self):
-        return self._read_uint32 (self._RLP_WAKEUP_ADDR_OFFSET)
+        return self._read_uint (self._RLP_WAKEUP_ADDR_OFFSET, self._RLP_WAKEUP_ADDR_LENGTH)
     def Reserved (self):
-        return self._read_uint32 (self._RESERVED_OFFSET)
+        return self._read_uint (self._RESERVED_OFFSET, self._RESERVED_LENGTH)
     def NumSinitMdrs (self):
-        return self._read_uint32 (self._NUMBER_SINIT_MDRS_OFFSET)
+        return self._read_uint (self._NUMBER_SINIT_MDRS_OFFSET, self._NUMBER_SINIT_MDRS_LENGTH)
     def SinitMdrTableOffset (self):
-        return self._read_uint32 (self._SINIT_MDR_TABLE_OFFSET_OFFSET)
+        return self._read_uint (self._SINIT_MDR_TABLE_OFFSET_OFFSET, self._SINIT_MDR_TABLE_OFFSET_LENGTH)
     def SinitVtdDmarTableSize (self):
-        return self._read_uint32 (self._SINIT_VTD_DMAR_TABLE_SIZE_OFFSET)
+        return self._read_uint (self._SINIT_VTD_DMAR_TABLE_SIZE_OFFSET, self._SINIT_VTD_DMAR_TABLE_SIZE_LENGTH)
     def SinitVtdDmarTableOffset (self):
-        return self._read_uint32 (self._SINIT_VTD_DMAR_TABLE_OFFSET_OFFSET)
+        return self._read_uint (self._SINIT_VTD_DMAR_TABLE_OFFSET_OFFSET, self._SINIT_VTD_DMAR_TABLE_OFFSET_LENGTH)
     def ProcScrtmStatus (self):
-        return self._read_uint32 (self._PROCESSOR_SCRTM_STATUS_OFFSET)
+        return self._read_uint (self._PROCESSOR_SCRTM_STATUS_OFFSET, self._PROCESSOR_SCRTM_STATUS_LENGTH)
 
 class osSinitData (binParse):
     _VERSION_OFFSET = 0
@@ -425,29 +430,29 @@ class osSinitData (binParse):
     def __init__(self, pbytes):
         super (osSinitData, self).__init__ (None, str (pbytes))
     def Version (self):
-        return self._read_uint32 (self._VERSION_OFFSET)
+        return self._read_uint (self._VERSION_OFFSET, self._VERSION_LENGTH)
     def MlePageTableBase (self):
-        return self._read_uint64 (self._MLE_PAGETABLE_BASE_OFFSET)
+        return self._read_uint (self._MLE_PAGETABLE_BASE_OFFSET, self._MLE_PAGETABLE_BASE_LENGTH)
     def MleSize (self):
-        return self._read_uint64 (self._MLE_SIZE_OFFSET)
+        return self._read_uint (self._MLE_SIZE_OFFSET, self._MLE_SIZE_LENGTH)
     def MleHeaderBase (self):
-        return self._read_uint64 (self._MLE_HEADER_BASE_OFFSET)
+        return self._read_uint (self._MLE_HEADER_BASE_OFFSET, self._MLE_HEADER_BASE_LENGTH)
     def PmrLowBase (self):
-        return self._read_uint64 (self._PMR_LOW_BASE_OFFSET)
+        return self._read_uint (self._PMR_LOW_BASE_OFFSET, self._PMR_LOW_BASE_LENGTH)
     def PmrLowSize (self):
-        return self._read_uint64 (self._PMR_LOW_SIZE_OFFSET)
+        return self._read_uint (self._PMR_LOW_SIZE_OFFSET, self._PMR_LOW_SIZE_LENGTH)
     def PmrHighBase (self):
-        return self._read_uint64 (self._PMR_HIGH_BASE_OFFSET)
+        return self._read_uint (self._PMR_HIGH_BASE_OFFSET, self._PMR_HIGH_BASE_LENGTH)
     def PmrHighSize (self):
-        return self._read_uint64 (self._PMR_HIGH_SIZE_OFFSET)
+        return self._read_uint (self._PMR_HIGH_SIZE_OFFSET, self._PMR_HIGH_SIZE_LENGTH)
     def LcpPoBase (self):
-        return self._read_uint64 (self._LCP_PO_BASE_OFFSET)
+        return self._read_uint (self._LCP_PO_BASE_OFFSET, self._LCP_PO_BASE_LENGTH)
     def LcpPoSize (self):
-        return self._read_uint64 (self._LCP_PO_SIZE_OFFSET)
+        return self._read_uint (self._LCP_PO_SIZE_OFFSET, self._LCP_PO_SIZE_LENGTH)
     def Capabilities (self):
-        return self._read_uint32 (self._CAPABILITIES_OFFSET)
+        return self._read_uint (self._CAPABILITIES_OFFSET, self._CAPABILITIES_LENGTH)
     def EfiRsdtPointer (self):
-        return self._read_uint64 (self._EFI_RSDT_POINTER_OFFSET)
+        return self._read_uint (self._EFI_RSDT_POINTER_OFFSET, self._EFI_RSDT_POINTER_LENGTH)
         
 def pp_bytearray(pbytearray):
     printbuf = list ()
