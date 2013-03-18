@@ -50,7 +50,6 @@ def main():
         sys.exit (1)
 
     if args.pretty:
-        txt.pp_PubConfRegs (txtPubRegs)
         txt.pp_TxtHeap (heap)
 
         sinitMle = txt.sinitMleData (heap.SinitMleData ())

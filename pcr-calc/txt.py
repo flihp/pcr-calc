@@ -252,7 +252,6 @@ class pubConfRegsParse(mapParse):
         self._size = (self._TXT_E2STS_OFFSET + self._REG_SIZE) - self._TXT_STS_OFFSET
         if from_mem:
             self._offset = self._TXT_PUB_CONFIG_REGS_BASE
-        print 'mapping TXT public config registers from offset {0}, size {1}'.format (hex (self._offset), hex (self._size))
         super (pubConfRegsParse, self).__init__ (pfile, pmmap, poffset=self._offset, psize=self._size)
     # readable config registers
     def Status (self):
