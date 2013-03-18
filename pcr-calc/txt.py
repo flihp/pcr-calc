@@ -8,6 +8,7 @@ import hashlib
 import struct
 import datetime
 import mmap
+import pcrutil
 
 class acmFlags(object):
     def __init__(self, stuff):
@@ -451,6 +452,70 @@ class osSinitData (binParse):
     def EfiRsdtPointer (self):
         return self._read_uint64 (self._EFI_RSDT_POINTER_OFFSET)
         
+def pp_PubConfRegs (regs):
+    print 'TXT Public Config Registers:'
+    print '  Status:         {0:#0{1}x}'.format (regs.Status (), 18)
+    print '  ErrorStatus:    {0:#0{1}x}'.format (regs.ErrorStatus (), 18)
+    print '  ErrorCode:      {0:#0{1}x}'.format (regs.ErrorCode (), 18)
+    print '  FSBInterface:   {0:#0{1}x}'.format (regs.FSBInterface (), 18)
+    print '  DeviceID:       {0:#0{1}x}'.format (regs.DeviceID (), 18)
+    print '  QuickPath:      {0:#0{1}x}'.format (regs.QuickPath (), 18)
+    print '  SINITBase:      {0:#0{1}x}'.format (regs.SINITBase (), 18)
+    print '  SINITSize:      {0:#0{1}x}'.format (regs.SINITSize (), 18)
+    print '  MLEJoinBase:    {0:#0{1}x}'.format (regs.MLEJoinBase (), 18)
+    print '  HeapBase:       {0:#0{1}x}'.format (regs.HeapBase (), 18)
+    print '  HeapSize:       {0:#0{1}x}'.format (regs.HeapSize (), 18)
+    print '  DMAProtected:   {0:#0{1}x}'.format (regs.HeapSize (), 18)
+    print '  PublicKey:'
+    for _bytestr in pcrutil.prettyprint_bytearray (regs.PublicKey_Bytes ()):
+        print "    {0}".format (_bytestr)
+    print '  ExtErrorStatus: {0:#0{1}x}'.format (regs.ExtErrorStatus (), 18)
+
+def pp_TxtHeap (heap):
+    print 'TXT Heap Data:'
+    print '  BiosDataSize:           {0:#0{1}x}'.format (heap.BiosDataSize (), heap._BIOS_DATA_SIZE_LENGTH + 2)
+    print '  OsMleDataSize:          {0:#0{1}x}'.format (heap.OsMleDataSize (), heap._OS_MLE_DATA_SIZE_LENGTH + 2)
+    print '  OsSinitDataSize:        {0:#0{1}x}'.format (heap.OsSinitDataSize (), heap._OS_SINIT_DATA_SIZE_LENGTH + 2)
+    print '  OsMleDataSize:          {0:#0{1}x}'.format (heap.OsMleDataSize (), heap._OS_MLE_DATA_SIZE_LENGTH + 2)
+
+def pp_SinitToMle (sinitMle):
+    print 'SINIT to MLE Data:'
+    print '  Version:                 {0:#0{1}x}'.format (sinitMle.Version (), sinitMle._VERSION_LENGTH * 2 + 2)
+    print '  BiosAcmId:'
+    for _bytestr in pcrutil.prettyprint_bytearray (sinitMle.BiosAcmId ()):
+        print '    {0}'.format (_bytestr)
+    print '  EdxSenterFlags:          {0:#0{1}x}'.format (sinitMle.EdxSenterFlags (), sinitMle._EDX_SENTER_FLAGS_LENGTH * 2 + 2)
+    print '  MsegValid:               {0:#0{1}x}'.format (sinitMle.MsegValid (), sinitMle._MSEG_VALID_LENGTH * 2 + 2)
+    print '  SinitHash:'
+    for _bytestr in pcrutil.prettyprint_bytearray (sinitMle.SinitHash ()):
+        print '    {0}'.format (_bytestr)
+    print '  LcpPolicyHash:'
+    for _bytestr in pcrutil.prettyprint_bytearray (sinitMle.LcpPolicyHash ()):
+        print '    {0}'.format (_bytestr)
+    print '  PolicyControl:           {0:#0{1}x}'.format (sinitMle.PolicyControl (), sinitMle._POLICY_CONTROL_LENGTH * 2 + 2)
+    print '  RlpWakeupAddr:           {0:#0{1}x}'.format (sinitMle.RlpWakeupAddr (), sinitMle._RLP_WAKEUP_ADDR_LENGTH * 2 + 2)
+    print '  Reserved:                {0:#0{1}x}'.format (sinitMle.Reserved (), sinitMle._RESERVED_LENGTH * 2 + 2)
+    print '  NumSinitMdrs:            {0:#0{1}x}'.format (sinitMle.NumSinitMdrs (), sinitMle._NUMBER_SINIT_MDRS_LENGTH * 2 + 2)
+    print '  SinitMdrTableOffset:     {0:#0{1}x}'.format (sinitMle.SinitMdrTableOffset (), sinitMle._SINIT_MDR_TABLE_OFFSET_LENGTH * 2 + 2)
+    print '  SinitVtdDmarTableSize:   {0:#0{1}x}'.format (sinitMle.SinitVtdDmarTableSize (), sinitMle._SINIT_VTD_DMAR_TABLE_SIZE_LENGTH * 2 + 2)
+    print '  SinitVtdDmarTableOffset: {0:#0{1}x}'.format (sinitMle.SinitVtdDmarTableOffset (), sinitMle._SINIT_VTD_DMAR_TABLE_OFFSET_LENGTH * 2 + 2)
+    print '  ProcScrtmStatus:         {0:#0{1}x}'.format (sinitMle.ProcScrtmStatus (), sinitMle._PROCESSOR_SCRTM_STATUS_LENGTH * 2 + 2)
+
+def pp_OsToSinit (os_sinit):
+    print 'OsToSinit:'
+    print '  Version:          {0:#0{1}x}'.format (os_sinit.Version (), os_sinit._VERSION_LENGTH * 2 + 2)
+    print '  MlePageTableBase: {0:#0{1}x}'.format (os_sinit.MlePageTableBase (), os_sinit._MLE_PAGETABLE_BASE_LENGTH + 2)
+    print '  MleSize:          {0:#0{1}x}'.format (os_sinit.MleSize (), os_sinit._MLE_SIZE_LENGTH * 2 + 2)
+    print '  MleHeaderBase:    {0:#0{1}x}'.format (os_sinit.MleHeaderBase (), os_sinit._MLE_HEADER_BASE_LENGTH * 2 + 2)
+    print '  PmrLowBase:       {0:#0{1}x}'.format (os_sinit.PmrLowBase (), os_sinit._PMR_LOW_BASE_LENGTH * 2 + 2)
+    print '  PmrLowSize:       {0:#0{1}x}'.format (os_sinit.PmrLowSize (), os_sinit._PMR_LOW_SIZE_LENGTH * 2 + 2)
+    print '  PmrHighBase:      {0:#0{1}x}'.format (os_sinit.PmrHighBase (), os_sinit._PMR_HIGH_BASE_LENGTH * 2 + 2)
+    print '  PmrHighSize:      {0:#0{1}x}'.format (os_sinit.PmrHighSize (), os_sinit._PMR_HIGH_SIZE_LENGTH * 2 + 2)
+    print '  LcpPoBase:        {0:#0{1}x}'.format (os_sinit.LcpPoBase (), os_sinit._LCP_PO_BASE_LENGTH * 2 + 2)
+    print '  LcpPoSize:        {0:#0{1}x}'.format (os_sinit.LcpPoSize (), os_sinit._LCP_PO_SIZE_LENGTH * 2 + 2)
+    print '  Capabilities:     {0:#0{1}x}'.format (os_sinit.Capabilities (), os_sinit._CAPABILITIES_LENGTH * 2 + 2)
+    print '  EfiRsdtPointer:   {0:#0{1}x}'.format (os_sinit.EfiRsdtPointer (), os_sinit._EFI_RSDT_POINTER_LENGTH * 2 + 2)
+
 class pcrEmu(object):
     def __init__(self):
         self._value = base64.b16decode(''.join('00' for x in range (0, hashlib.sha1 ().digest_size)))
