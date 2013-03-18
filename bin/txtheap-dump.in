@@ -91,6 +91,7 @@ def main():
     parser.add_argument('-m', '--mmap', help=mmap_help, action='store_true')
     args = parser.parse_args()
 
+    dev_mem = False
     if args.infile == '/dev/mem':
         dev_mem = True
 
