@@ -465,29 +465,29 @@ def pp_bytearray(pbytearray):
 
 def pp_PubConfRegs (regs):
     print 'TXT Public Config Registers:'
-    print '  Status:         {0:#0{1}x}'.format (regs.Status (), 18)
-    print '  ErrorStatus:    {0:#0{1}x}'.format (regs.ErrorStatus (), 18)
-    print '  ErrorCode:      {0:#0{1}x}'.format (regs.ErrorCode (), 18)
-    print '  FSBInterface:   {0:#0{1}x}'.format (regs.FSBInterface (), 18)
-    print '  DeviceID:       {0:#0{1}x}'.format (regs.DeviceID (), 18)
-    print '  QuickPath:      {0:#0{1}x}'.format (regs.QuickPath (), 18)
-    print '  SINITBase:      {0:#0{1}x}'.format (regs.SINITBase (), 18)
-    print '  SINITSize:      {0:#0{1}x}'.format (regs.SINITSize (), 18)
-    print '  MLEJoinBase:    {0:#0{1}x}'.format (regs.MLEJoinBase (), 18)
-    print '  HeapBase:       {0:#0{1}x}'.format (regs.HeapBase (), 18)
-    print '  HeapSize:       {0:#0{1}x}'.format (regs.HeapSize (), 18)
-    print '  DMAProtected:   {0:#0{1}x}'.format (regs.HeapSize (), 18)
+    print '  Status:         {0:#0{1}x}'.format (regs.Status (), regs._REG_SIZE * 2 + 2)
+    print '  ErrorStatus:    {0:#0{1}x}'.format (regs.ErrorStatus (), regs._REG_SIZE * 2 + 2)
+    print '  ErrorCode:      {0:#0{1}x}'.format (regs.ErrorCode (), regs._REG_SIZE * 2 + 2)
+    print '  FSBInterface:   {0:#0{1}x}'.format (regs.FSBInterface (), regs._REG_SIZE * 2 + 2)
+    print '  DeviceID:       {0:#0{1}x}'.format (regs.DeviceID (), regs._REG_SIZE * 2 + 2)
+    print '  QuickPath:      {0:#0{1}x}'.format (regs.QuickPath (), regs._REG_SIZE * 2 + 2)
+    print '  SINITBase:      {0:#0{1}x}'.format (regs.SINITBase (), regs._REG_SIZE * 2 + 2)
+    print '  SINITSize:      {0:#0{1}x}'.format (regs.SINITSize (), regs._REG_SIZE * 2 + 2)
+    print '  MLEJoinBase:    {0:#0{1}x}'.format (regs.MLEJoinBase (), regs._REG_SIZE * 2 + 2)
+    print '  HeapBase:       {0:#0{1}x}'.format (regs.HeapBase (), regs._REG_SIZE * 2 + 2)
+    print '  HeapSize:       {0:#0{1}x}'.format (regs.HeapSize (), regs._REG_SIZE * 2 + 2)
+    print '  DMAProtected:   {0:#0{1}x}'.format (regs.HeapSize (), regs._REG_SIZE * 2 + 2)
     print '  PublicKey:'
     for _bytestr in pp_bytearray (regs.PublicKey_Bytes ()):
         print "    {0}".format (_bytestr)
-    print '  ExtErrorStatus: {0:#0{1}x}'.format (regs.ExtErrorStatus (), 18)
+    print '  ExtErrorStatus: {0:#0{1}x}'.format (regs.ExtErrorStatus (), regs._REG_SIZE * 2 + 2)
 
 def pp_TxtHeap (heap):
     print 'TXT Heap Data:'
-    print '  BiosDataSize:           {0:#0{1}x}'.format (heap.BiosDataSize (), heap._BIOS_DATA_SIZE_LENGTH + 2)
-    print '  OsMleDataSize:          {0:#0{1}x}'.format (heap.OsMleDataSize (), heap._OS_MLE_DATA_SIZE_LENGTH + 2)
-    print '  OsSinitDataSize:        {0:#0{1}x}'.format (heap.OsSinitDataSize (), heap._OS_SINIT_DATA_SIZE_LENGTH + 2)
-    print '  OsMleDataSize:          {0:#0{1}x}'.format (heap.OsMleDataSize (), heap._OS_MLE_DATA_SIZE_LENGTH + 2)
+    print '  BiosDataSize:           {0:#0{1}x}'.format (heap.BiosDataSize (), heap._BIOS_DATA_SIZE_LENGTH * 2 + 2)
+    print '  OsMleDataSize:          {0:#0{1}x}'.format (heap.OsMleDataSize (), heap._OS_MLE_DATA_SIZE_LENGTH * 2 + 2)
+    print '  OsSinitDataSize:        {0:#0{1}x}'.format (heap.OsSinitDataSize (), heap._OS_SINIT_DATA_SIZE_LENGTH * 2 + 2)
+    print '  OsMleDataSize:          {0:#0{1}x}'.format (heap.OsMleDataSize (), heap._OS_MLE_DATA_SIZE_LENGTH * 2 + 2)
 
 def pp_SinitToMle (sinitMle):
     print 'SINIT to MLE Data:'
