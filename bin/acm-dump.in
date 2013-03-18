@@ -9,7 +9,6 @@ import sys
 
 sys.path.insert(1, '@pythondir@/@PACKAGE@')
 
-import pcrutil
 import txt
 
 def main():
@@ -51,22 +50,22 @@ def main():
     print "  SegSel:         {0}".format (acm.SegSel ())
     print "  EntryPoint:     {0}".format (acm.EntryPoint ())
     print "  Reserved2:"
-    for _bytestr in pcrutil.prettyprint_bytearray (acm.Reserved2 ()):
+    for _bytestr in txt.pp_bytearray (acm.Reserved2 ()):
         print "    {0}".format (_bytestr)
     print "  KeySize:        {0}".format (acm.KeySize ())
     print "  ScratchSize:    {0}".format (acm.ScratchSize ())
     print "  RSAPubKey:"
-    for _bytestr in pcrutil.prettyprint_bytearray (acm.RSAPubKey ()):
+    for _bytestr in txt.pp_bytearray (acm.RSAPubKey ()):
         print "    {0}".format (_bytestr)
     print "  RSAPubExp:      {0}".format (acm.RSAPubExp ())
     print "  RSASig:"
-    for _bytestr in pcrutil.prettyprint_bytearray (acm.RSASig ()):
+    for _bytestr in txt.pp_bytearray (acm.RSASig ()):
         print "    {0}".format (_bytestr)
     print "  Scratch:"
-    for _bytestr in pcrutil.prettyprint_bytearray (acm.Scratch ()):
+    for _bytestr in txt.pp_bytearray (acm.Scratch ()):
         print "    {0}".format (_bytestr)
     print "  UserArea:"
-    for _bytestr in pcrutil.prettyprint_bytearray (acm.UserArea ()):
+    for _bytestr in txt.pp_bytearray (acm.UserArea ()):
         print "    {0}".format (_bytestr)
     sys.exit (0)
 

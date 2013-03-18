@@ -8,7 +8,6 @@ import hashlib
 import struct
 import datetime
 import mmap
-import pcrutil
 
 class acmFlags(object):
     def __init__(self, stuff):
@@ -452,6 +451,19 @@ class osSinitData (binParse):
     def EfiRsdtPointer (self):
         return self._read_uint64 (self._EFI_RSDT_POINTER_OFFSET)
         
+def pp_bytearray(pbytearray):
+    printbuf = list ()
+    printbuf.append (str ())
+    bytecount = 0
+    for byte in pbytearray:
+        bytecount += 1
+        printbuf[-1] += '{0:0{1}x}'.format (byte, 2)
+        if (bytecount % 2) == 0:
+            printbuf[-1] += ' '
+        if (bytecount % 16) == 0 and bytecount < len (pbytearray):
+            printbuf.append (str ())
+    return printbuf
+
 def pp_PubConfRegs (regs):
     print 'TXT Public Config Registers:'
     print '  Status:         {0:#0{1}x}'.format (regs.Status (), 18)
@@ -467,7 +479,7 @@ def pp_PubConfRegs (regs):
     print '  HeapSize:       {0:#0{1}x}'.format (regs.HeapSize (), 18)
     print '  DMAProtected:   {0:#0{1}x}'.format (regs.HeapSize (), 18)
     print '  PublicKey:'
-    for _bytestr in pcrutil.prettyprint_bytearray (regs.PublicKey_Bytes ()):
+    for _bytestr in pp_bytearray (regs.PublicKey_Bytes ()):
         print "    {0}".format (_bytestr)
     print '  ExtErrorStatus: {0:#0{1}x}'.format (regs.ExtErrorStatus (), 18)
 
@@ -482,15 +494,15 @@ def pp_SinitToMle (sinitMle):
     print 'SINIT to MLE Data:'
     print '  Version:                 {0:#0{1}x}'.format (sinitMle.Version (), sinitMle._VERSION_LENGTH * 2 + 2)
     print '  BiosAcmId:'
-    for _bytestr in pcrutil.prettyprint_bytearray (sinitMle.BiosAcmId ()):
+    for _bytestr in pp_bytearray (sinitMle.BiosAcmId ()):
         print '    {0}'.format (_bytestr)
     print '  EdxSenterFlags:          {0:#0{1}x}'.format (sinitMle.EdxSenterFlags (), sinitMle._EDX_SENTER_FLAGS_LENGTH * 2 + 2)
     print '  MsegValid:               {0:#0{1}x}'.format (sinitMle.MsegValid (), sinitMle._MSEG_VALID_LENGTH * 2 + 2)
     print '  SinitHash:'
-    for _bytestr in pcrutil.prettyprint_bytearray (sinitMle.SinitHash ()):
+    for _bytestr in pp_bytearray (sinitMle.SinitHash ()):
         print '    {0}'.format (_bytestr)
     print '  LcpPolicyHash:'
-    for _bytestr in pcrutil.prettyprint_bytearray (sinitMle.LcpPolicyHash ()):
+    for _bytestr in pp_bytearray (sinitMle.LcpPolicyHash ()):
         print '    {0}'.format (_bytestr)
     print '  PolicyControl:           {0:#0{1}x}'.format (sinitMle.PolicyControl (), sinitMle._POLICY_CONTROL_LENGTH * 2 + 2)
     print '  RlpWakeupAddr:           {0:#0{1}x}'.format (sinitMle.RlpWakeupAddr (), sinitMle._RLP_WAKEUP_ADDR_LENGTH * 2 + 2)
