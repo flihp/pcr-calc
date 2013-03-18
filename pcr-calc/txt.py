@@ -300,7 +300,6 @@ class txtHeap (mapParse):
         self._mmap = pmmap
         self._offset = offset
         self._size = size
-        print 'mapping TXT heap at offset {0}, length {1}'.format (hex (self._offset), hex (self._size))
         super (txtHeap, self).__init__ (pfile, pmmap, poffset=self._offset, psize=self._size)
     def _OsMleDataOffset (self):
         return self.BiosDataSize () + self._BIOS_DATA_SIZE_LENGTH
