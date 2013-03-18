@@ -9,7 +9,6 @@ import sys
 
 sys.path.insert(1, '@pythondir@/@PACKAGE@')
 
-import pcrutil
 import txt
 
 def main():
