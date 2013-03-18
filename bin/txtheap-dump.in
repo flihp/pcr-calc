@@ -38,15 +38,17 @@ def main():
         sys.exit (1)
 
     try:
-        txtPubRegs = txt.pubConfRegsParse (fd_infile, args.mmap, dev_mem)
+        if dev_mem:
+            txtPubRegs = txt.pubConfRegsParse (fd_infile, args.mmap, dev_mem)
+            heap = txt.txtHeap (fd_infile, args.mmap, txtPubRegs.HeapBase (), txtPubRegs.HeapSize ())
+        else:
+            txtPubRegs = None
+            fd_infile.seek (0,2)
+            file_size = fd_infile.tell ()
+            fd_infile.seek (0)
+            heap = txt.txtHeap (fd_infile, args.mmap, 0, file_size)
     except IOError as e:
-        sys.stderr.write ('Exception reading TXT public config registers: {0}\n'.format (e))
-        sys.exit (1)
-
-    try:
-        heap = txt.txtHeap (fd_infile, args.mmap, txtPubRegs.HeapBase (), txtPubRegs.HeapSize ())
-    except IOError as e:
-        sys.stderr.write (('Exception reading TXT Heap: {0}').format (e))
+        sys.stderr.write ('Exception getting TXT Heap: {0}\n'.format (e))
         sys.exit (1)
 
     if args.pretty:
