@@ -381,6 +381,10 @@ class sinitMleData (binParse):
         return self._read_uint (self._MSEG_VALID_OFFSET, self._MSEG_VALID_LENGTH)
     def SinitHash (self):
         return self._read_bytes (self._SINIT_HASH_OFFSET, self._SINIT_HASH_LENGTH)
+    def MleHash (self):
+        return self._read_bytes (self._MLE_HASH_OFFSET, self._MLE_HASH_LENGTH)
+    def StmHash (self):
+        return self._read_bytes (self._STM_HASH_OFFSET, self._STM_HASH_LENGTH)
     def LcpPolicyHash (self):
         return self._read_bytes (self._LCP_POLICY_HASH_OFFSET, self._LCP_POLICY_HASH_LENGTH)
     def PolicyControl (self):
@@ -503,6 +507,12 @@ def pp_SinitToMle (sinitMle):
     print '  MsegValid:               {0:#0{1}x}'.format (sinitMle.MsegValid (), sinitMle._MSEG_VALID_LENGTH * 2 + 2)
     print '  SinitHash:'
     for _bytestr in pp_bytearray (sinitMle.SinitHash ()):
+        print '    {0}'.format (_bytestr)
+    print '  MleHash:'
+    for _bytestr in pp_bytearray (sinitMle.MleHash ()):
+        print '    {0}'.format (_bytestr)
+    print '  StmHash:'
+    for _bytestr in pp_bytearray (sinitMle.StmHash ()):
         print '    {0}'.format (_bytestr)
     print '  LcpPolicyHash:'
     for _bytestr in pp_bytearray (sinitMle.LcpPolicyHash ()):
