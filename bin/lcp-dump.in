@@ -12,11 +12,34 @@ sys.path.insert(1, '@pythondir@/@PACKAGE@')
 import txt
 
 def main():
+    description = 'pretty-print LCP heap from file'
+    lcp_help = 'file containing binary Launch Control Policy'
+    ver_help = 'version information'
     ver_str = '%(prog)s: @PACKAGE@ @VERSION@'
 
     parser = argparse.ArgumentParser(description=description)
+    parser.add_argument('lcp_file', help=lcp_help)
     parser.add_argument('-v', '--version', help=ver_help, action='version', version=ver_str)
     args = parser.parse_args()
+
+    try:
+        fd_lcp = open (args.lcp_file, 'rb')
+    except IOError as e:
+        sys.stderr.write ('Error opening {0} for reading: \"{1}\" ... Abort\n'.format(e.filename, e.strerror))
+        sys.exit (1)
+
+    try:
+        lcp_pol = txt.launchCtrlPol (fd_lcp, True)
+    except IOError as e:
+        sys.stderr.write ('Error mapping LCP ... Abort')
+        sys.exit (1)
+
+    # dump bits from the LCP that are hashed in PCR[17]
+    print 'Extend PCR[17]: {0}'.format (lcp_pol.ExtendPCR17 ())
+    print 'PolicyControl:  {0:#0{1}x}'.format (lcp_pol.PolicyControl (), lcp_pol._POLICY_CONTROL_LENGTH + 2)
+    print 'Policy Bytes:'
+    for _bytestr in txt.pp_bytearray (lcp_pol.Bytes ()):
+        print '    {0}'.format (_bytestr)
 
     sys.exit (0)
 
