@@ -16,6 +16,7 @@ def main():
     description = "Calculate PCR[17] from an Authenticated Code Module (ACM) and whatever data is needed"
     acm_help = "path to ACM file"
     heapfile_help = 'file to read as TXT Heap, /dev/mem is default'
+    lcp_help = 'file containing binary Launch Control Policy'
     mmap_help = 'access file through mmap'
     smd_help = "Sinit to Mle Data Table Version.  Default is version 8."
     ver_help = "version information"
@@ -25,6 +26,7 @@ def main():
     parser.add_argument('acm', help=acm_help)
     parser.add_argument('-v', '--version', help=ver_help, action='version', version=ver_str)
     parser.add_argument('-i', '--heapfile', help=heapfile_help, default='/dev/mem')
+    parser.add_argument('-l', '--lcpfile', help=lcp_help, default=False)
     parser.add_argument('-m', '--mmap', help=mmap_help, action='store_true')
     parser.add_argument('-s', '--smd', default=8, help=smd_help, type=int)
     ns = parser.parse_args()
@@ -113,7 +115,8 @@ def main():
     print 'sinit_mle.SintHash:'
     for _bytestr in txt.pp_bytearray (sinit_mle.SinitHash ()):
         print "    {0}".format (_bytestr)
-
+    
+    # hash stuff from the heap
     extend2 = hashlib.sha1 ()
     print 'append BiosAcmId'
     for _bytestr in txt.pp_bytearray (sinit_mle.BiosAcmId ()):
@@ -128,9 +131,9 @@ def main():
         print "    {0}".format (_bytestr)
     extend2.update (sinit_mle.StmHash ())
     print 'append PolicyControl_Bytes:'
-    for _bytestr in txt.pp_bytearray (sinit_mle.PolicyControl_Dud ()):
+    for _bytestr in txt.pp_bytearray (sinit_mle.PolicyControl_Bytes ()):
         print "    {0}".format (_bytestr)
-    extend2.update (sinit_mle.PolicyControl_Dud ())
+    extend2.update (sinit_mle.PolicyControl_Bytes ())
     print 'append LcpPolicyHash:'
     for _bytestr in txt.pp_bytearray (sinit_mle.LcpPolicyHash ()):
         print "    {0}".format (_bytestr)
@@ -141,7 +144,8 @@ def main():
     print 'append Capabilities_Bytes:'
     for _bytestr in txt.pp_bytearray (os_sinit.Capabilities_Bytes ()):
         print "    {0}".format (_bytestr)
-    extend2.update (os_sinit.Capabilities_Bytes ())
+#    extend2.update (os_sinit.Capabilities_Bytes ())
+    extend2.update (base64.b16decode ('00000000'))
     if ns.smd >= 8:
         print 'append ProcScrtmStatus_Bytes:'
         for _bytestr in txt.pp_bytearray (sinit_mle.ProcScrtmStatus_Bytes ()):
@@ -149,8 +153,39 @@ def main():
         extend2.update (sinit_mle.ProcScrtmStatus_Bytes ())
 
     print 'extend2: {0}'.format (extend2.hexdigest ())
+    # extend PCR17 with stuff from heap
     pcr17.extend (extend2.digest ())
     print 'PCR[17]: {0}'.format (pcr17.hexread ())
+    # extend PCR17 with LCP if 
+    if ns.lcpfile:
+        try:
+            fd_lcp = open (ns.lcpfile, 'rb')
+        except IOError as e:
+            sys.stderr.write ('Error opening {0} for reading: \"{1}\" ... Abort\n'.format(e.filename, e.strerror))
+            sys.exit (1)
+    else:
+        print 'no LCP file'
+        sys.exit (0)
+
+    try:
+        lcp_pol = txt.launchCtrlPol (fd_lcp, True)
+    except IOError as e:
+        sys.stderr.write ('Error mapping LCP ... Abort')
+        sys.exit (1)
+ 
+    if lcp_pol.ExtendPCR17 ():
+        pol_hash = hashlib.sha1 ()
+        pol_hash.update (lcp_pol.Bytes ())
+        print 'lcp hash: {0}'.format (pol_hash.hexdigest ())
+        polctrl_hash = hashlib.sha1 ()
+        polctrl_hash.update (lcp_pol.PolicyControl_Bytes ())
+        polctrl_hash.update (pol_hash.digest ())
+        print 'polctrl + lcp hash: {0}'.format (polctrl_hash.hexdigest ())
+    else:
+        print 'PolicyControl says not to extend PCR[17]'
+
+    pcr17.extend (polctrl_hash.digest ())
+    print 'PCR[17] final: {0}'.format (pcr17.hexread ())
 
     sys.exit (0)
 
