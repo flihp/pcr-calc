@@ -15,6 +15,8 @@ import txt
 def main():
     description = "Calculate PCR[17] from an Authenticated Code Module (ACM) and whatever data is needed"
     acm_help = "path to ACM file"
+    heapfile_help = 'file to read as TXT Heap, /dev/mem is default'
+    mmap_help = 'access file through mmap'
     smd_help = "Sinit to Mle Data Table Version.  Default is version 8."
     ver_help = "version information"
     ver_str = "%(prog)s: @PACKAGE@ @VERSION@"
@@ -22,6 +24,8 @@ def main():
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('acm', help=acm_help)
     parser.add_argument('-v', '--version', help=ver_help, action='version', version=ver_str)
+    parser.add_argument('-i', '--heapfile', help=heapfile_help, default='/dev/mem')
+    parser.add_argument('-m', '--mmap', help=mmap_help, action='store_true')
     parser.add_argument('-s', '--smd', default=8, help=smd_help, type=int)
     ns = parser.parse_args()
 
@@ -68,6 +72,7 @@ def main():
 
     # Calculate HASH_DATA for first extend of PCR[17]:
     # Assume SinitMleData.EdxSenterFlags is 4 bytes of 0's
+    print 'sha256 (acm): {0}'.format (acmhash.hexdigest ())
     hash_data = hashlib.sha1 ()
     hash_data.update (acmhash.digest ())
     hash_data.update (base64.b16decode(b'00000000'))
@@ -78,6 +83,74 @@ def main():
     pcr17 = txt.pcrEmu ()
     pcr17.extend (hash_data.digest ())
     print "SinitMleData.SinitHash: {0}".format (pcr17.hexread ())
+
+    dev_mem = False
+    if ns.heapfile == '/dev/mem':
+        dev_mem = True
+
+    try:
+        fd_heapfile = open (ns.heapfile, 'rb')
+    except IOError as e:
+        sys.stderr.write ('Error opening {0} for reading: \"{1}\" ... Abort\n'.format(e.filename, e.strerror))
+        sys.exit (1)
+
+    try:
+        if dev_mem:
+            txtPubRegs = txt.pubConfRegsParse (fd_heapfile, ns.mmap, dev_mem)
+            heap = txt.txtHeap (fd_heapfile, ns.mmap, txtPubRegs.HeapBase (), txtPubRegs.HeapSize ())
+        else:
+            txtPubRegs = None
+            fd_heapfile.seek (0,2)
+            file_size = fd_heapfile.tell ()
+            fd_heapfile.seek (0)
+            heap = txt.txtHeap (fd_heapfile, ns.mmap, 0, file_size)
+    except IOError as e:
+        sys.stderr.write ('Exception getting TXT Heap: {0}\n'.format (e))
+        sys.exit (1)
+
+    sinit_mle = txt.sinitMleData (heap.SinitMleData ())
+
+    print 'sinit_mle.SintHash:'
+    for _bytestr in txt.pp_bytearray (sinit_mle.SinitHash ()):
+        print "    {0}".format (_bytestr)
+
+    extend2 = hashlib.sha1 ()
+    print 'append BiosAcmId'
+    for _bytestr in txt.pp_bytearray (sinit_mle.BiosAcmId ()):
+        print "    {0}".format (_bytestr)
+    extend2.update (sinit_mle.BiosAcmId ())
+    print 'append MsegValid_Bytes:'
+    for _bytestr in txt.pp_bytearray (sinit_mle.MsegValid_Bytes ()):
+        print "    {0}".format (_bytestr)
+    extend2.update (sinit_mle.MsegValid_Bytes ())
+    print 'append StmHash:'
+    for _bytestr in txt.pp_bytearray (sinit_mle.StmHash ()):
+        print "    {0}".format (_bytestr)
+    extend2.update (sinit_mle.StmHash ())
+    print 'append PolicyControl_Bytes:'
+    for _bytestr in txt.pp_bytearray (sinit_mle.PolicyControl_Dud ()):
+        print "    {0}".format (_bytestr)
+    extend2.update (sinit_mle.PolicyControl_Dud ())
+    print 'append LcpPolicyHash:'
+    for _bytestr in txt.pp_bytearray (sinit_mle.LcpPolicyHash ()):
+        print "    {0}".format (_bytestr)
+    extend2.update (sinit_mle.LcpPolicyHash ())
+
+    os_sinit = txt.osSinitData (heap.OsSinitData ())
+
+    print 'append Capabilities_Bytes:'
+    for _bytestr in txt.pp_bytearray (os_sinit.Capabilities_Bytes ()):
+        print "    {0}".format (_bytestr)
+    extend2.update (os_sinit.Capabilities_Bytes ())
+    if ns.smd >= 8:
+        print 'append ProcScrtmStatus_Bytes:'
+        for _bytestr in txt.pp_bytearray (sinit_mle.ProcScrtmStatus_Bytes ()):
+            print "    {0}".format (_bytestr)
+        extend2.update (sinit_mle.ProcScrtmStatus_Bytes ())
+
+    print 'extend2: {0}'.format (extend2.hexdigest ())
+    pcr17.extend (extend2.digest ())
+    print 'PCR[17]: {0}'.format (pcr17.hexread ())
 
     sys.exit (0)
 
