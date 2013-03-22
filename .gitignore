@@ -14,5 +14,6 @@ Makefile
 /py-compile
 
 /bin/acm-dump
+/bin/lcp-dump
 /bin/pcr17
 /bin/txtheap-dump
