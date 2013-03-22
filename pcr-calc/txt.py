@@ -379,6 +379,8 @@ class sinitMleData (binParse):
         return self._read_uint (self._EDX_SENTER_FLAGS_OFFSET, self._EDX_SENTER_FLAGS_LENGTH)
     def MsegValid (self):
         return self._read_uint (self._MSEG_VALID_OFFSET, self._MSEG_VALID_LENGTH)
+    def MsegValid_Bytes (self):
+        return self._read_bytes (self._MSEG_VALID_OFFSET, self._MSEG_VALID_LENGTH)
     def SinitHash (self):
         return self._read_bytes (self._SINIT_HASH_OFFSET, self._SINIT_HASH_LENGTH)
     def MleHash (self):
@@ -389,6 +391,8 @@ class sinitMleData (binParse):
         return self._read_bytes (self._LCP_POLICY_HASH_OFFSET, self._LCP_POLICY_HASH_LENGTH)
     def PolicyControl (self):
         return self._read_uint (self._POLICY_CONTROL_OFFSET, self._POLICY_CONTROL_LENGTH)
+    def PolicyControl_Bytes (self):
+        return self._read_bytes (self._POLICY_CONTROL_OFFSET, self._POLICY_CONTROL_LENGTH)
     def RlpWakeupAddr (self):
         return self._read_uint (self._RLP_WAKEUP_ADDR_OFFSET, self._RLP_WAKEUP_ADDR_LENGTH)
     def Reserved (self):
@@ -403,6 +407,8 @@ class sinitMleData (binParse):
         return self._read_uint (self._SINIT_VTD_DMAR_TABLE_OFFSET_OFFSET, self._SINIT_VTD_DMAR_TABLE_OFFSET_LENGTH)
     def ProcScrtmStatus (self):
         return self._read_uint (self._PROCESSOR_SCRTM_STATUS_OFFSET, self._PROCESSOR_SCRTM_STATUS_LENGTH)
+    def ProcScrtmStatus_Bytes (self):
+        return self._read_bytes (self._PROCESSOR_SCRTM_STATUS_OFFSET, self._PROCESSOR_SCRTM_STATUS_LENGTH)
 
 class osSinitData (binParse):
     _VERSION_OFFSET = 0
@@ -455,8 +461,69 @@ class osSinitData (binParse):
         return self._read_uint (self._LCP_PO_SIZE_OFFSET, self._LCP_PO_SIZE_LENGTH)
     def Capabilities (self):
         return self._read_uint (self._CAPABILITIES_OFFSET, self._CAPABILITIES_LENGTH)
+    def Capabilities_Bytes (self):
+        return self._read_bytes (self._CAPABILITIES_OFFSET, self._CAPABILITIES_LENGTH)
     def EfiRsdtPointer (self):
         return self._read_uint (self._EFI_RSDT_POINTER_OFFSET, self._EFI_RSDT_POINTER_LENGTH)
+
+class PolEntry (binParse):
+    _MOD_NUM_OFFSET = 0
+    _MOD_NUM_LENGTH = 1
+    _PCR_OFFSET = _MOD_NUM_OFFSET + _MOD_NUM_LENGTH
+    _PCR_LENGTH = 1
+    _HASH_TYPE_OFFSET = _PCR_OFFSET + _PCR_LENGTH
+    _HASH_TYPE_LENGTH = 1
+    _RESERVED_OFFSET = _HASH_TYPE_OFFSET + _HASH_TYPE_LENGTH
+    _RESERVED_LENGTH = 4
+    _NUM_HASHES_OFFSET = _RESERVED_OFFSET + _RESERVED_LENGTH
+    _NUM_HASHES_LENGTH = 1
+    _HASHES_OFFSET = _NUM_HASHES_OFFSET + _NUM_HASHES_LENGTH
+    def __init__(self, pbytes):
+        super (osSinitData, self).__init__ (None, str (pbytes))
+    def ModNum (self):
+        return self._read_uint (self._MOD_NUM_OFFSET, self._MOD_NUM_LENGTH)
+    def Pcr (self):
+        return self._read_uint (self._PCR_OFFSET, self. _PCR_LENGTH)
+    def HashType (self):
+        return self._read_uint (self._HASH_TYPE_OFFSET, self._HASH_TYPE_LENGTH)
+    def Reserved (self):
+        return self._read_uint (self._RESERVED_OFFSET, self._RESERVED_LENGTH)
+    def NumHashes (self):
+        return self._read_uint (self._NUM_HASHES_OFFSET, self._NUM_HASHES_LENGTH)
+    def Hases (self):
+        return 0
+
+class lcpPolicy (mapParse):
+    _VERSION_OFFSET = 0
+    _VERSION_LENGTH = 1
+    _POLICY_TYPE_OFFSET = _VERSION_OFFSET + _VERSION_LENGTH
+    _POLICY_TYPE_LENGTH = 1
+    _HASH_ALG_OFFSET = _POLICY_TYPE_OFFSET + _POLICY_TYPE_LENGTH
+    _HASH_ALG_LENGTH = 1
+    _POLICY_CONTROL_OFFSET = _HASH_ALG_OFFSET + _HASH_ALG_LENGTH
+    _POLICY_CONTROL_LENGTH = 4
+    _RESERVED_OFFSET = _POLICY_CONTROL_OFFSET + _POLICY_CONTROL_LENGTH
+    _RESERVED_LENGTH = 4
+    _NUM_ENTRIES_OFFSET = _RESERVED_OFFSET + _RESERVED_LENGTH
+    _NUM_ENTRIES_LENGTH = 1
+    _ENTRIES_OFFSET = _NUM_ENTRIES_OFFSET + _NUM_ENTRIES_LENGTH
+    def __init__ (self, pfile, pmmap=False):
+        super (acmParse, self).__init__ (pfile, pmmap)
+    def Version (self):
+        return self._read_int (self._VERSION_OFFSET, self._VERSION_LENGTH)
+    def PolicyType (self):
+        return self._read_int (self._POLICY_TYPE_OFFSET, self._POLICY_TYPE_OFFSET)
+    def HashAlg (self):
+        return self._read_int (self._HASH_ALG_OFFSET, self._HASH_ALG_LENGTH)
+    def PolicyControl (self):
+        return self._read_int (self._POLICY_CONTROL_OFFSET, self._POLICY_CONTROL_LENGTH)
+    def Reserved (self):
+        return self._read_int (self._RESERVED_OFFSET, self._RESERVED_LENGTH)
+    def NumEntries (self):
+        return self._read_int (self._NUM_ENTRIES_OFFSET, self._NUM_ENTRIES_LENGTH)
+    def Entries (self):
+        return 0
+
         
 def pp_bytearray(pbytearray):
     printbuf = list ()
