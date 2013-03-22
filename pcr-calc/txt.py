@@ -466,7 +466,7 @@ class osSinitData (binParse):
     def EfiRsdtPointer (self):
         return self._read_uint (self._EFI_RSDT_POINTER_OFFSET, self._EFI_RSDT_POINTER_LENGTH)
 
-class PolEntry (binParse):
+class polEntry (binParse):
     _MOD_NUM_OFFSET = 0
     _MOD_NUM_LENGTH = 1
     _PCR_OFFSET = _MOD_NUM_OFFSET + _MOD_NUM_LENGTH
@@ -479,7 +479,7 @@ class PolEntry (binParse):
     _NUM_HASHES_LENGTH = 1
     _HASHES_OFFSET = _NUM_HASHES_OFFSET + _NUM_HASHES_LENGTH
     def __init__(self, pbytes):
-        super (osSinitData, self).__init__ (None, str (pbytes))
+        super (polEntry, self).__init__ (None, str (pbytes))
     def ModNum (self):
         return self._read_uint (self._MOD_NUM_OFFSET, self._MOD_NUM_LENGTH)
     def Pcr (self):
@@ -493,7 +493,7 @@ class PolEntry (binParse):
     def Hases (self):
         return 0
 
-class lcpPolicy (mapParse):
+class launchCtrlPol (mapParse):
     _VERSION_OFFSET = 0
     _VERSION_LENGTH = 1
     _POLICY_TYPE_OFFSET = _VERSION_OFFSET + _VERSION_LENGTH
@@ -507,23 +507,32 @@ class lcpPolicy (mapParse):
     _NUM_ENTRIES_OFFSET = _RESERVED_OFFSET + _RESERVED_LENGTH
     _NUM_ENTRIES_LENGTH = 1
     _ENTRIES_OFFSET = _NUM_ENTRIES_OFFSET + _NUM_ENTRIES_LENGTH
+    _TB_POLCTL_EXTEND_PCR17 = 0x1  # extend policy into PCR 17
     def __init__ (self, pfile, pmmap=False):
-        super (acmParse, self).__init__ (pfile, pmmap)
+        super (launchCtrlPol, self).__init__ (pfile, pmmap)
+    def Bytes (self):
+        return self._read_bytes (self._VERSION_OFFSET, self._file_size)
     def Version (self):
-        return self._read_int (self._VERSION_OFFSET, self._VERSION_LENGTH)
+        return self._read_uint (self._VERSION_OFFSET, self._VERSION_LENGTH)
     def PolicyType (self):
-        return self._read_int (self._POLICY_TYPE_OFFSET, self._POLICY_TYPE_OFFSET)
+        return self._read_uint (self._POLICY_TYPE_OFFSET, self._POLICY_TYPE_OFFSET)
     def HashAlg (self):
-        return self._read_int (self._HASH_ALG_OFFSET, self._HASH_ALG_LENGTH)
+        return self._read_uint (self._HASH_ALG_OFFSET, self._HASH_ALG_LENGTH)
     def PolicyControl (self):
-        return self._read_int (self._POLICY_CONTROL_OFFSET, self._POLICY_CONTROL_LENGTH)
+        return self._read_uint (self._POLICY_CONTROL_OFFSET, self._POLICY_CONTROL_LENGTH)
+    def PolicyControl_Bytes (self):
+        return self._read_bytes (self._POLICY_CONTROL_OFFSET, self._POLICY_CONTROL_LENGTH)
     def Reserved (self):
-        return self._read_int (self._RESERVED_OFFSET, self._RESERVED_LENGTH)
+        return self._read_uint (self._RESERVED_OFFSET, self._RESERVED_LENGTH)
     def NumEntries (self):
-        return self._read_int (self._NUM_ENTRIES_OFFSET, self._NUM_ENTRIES_LENGTH)
+        return self._read_uint (self._NUM_ENTRIES_OFFSET, self._NUM_ENTRIES_LENGTH)
     def Entries (self):
-        return 0
-
+        return self._read_bytes (self._ENTRIES_OFFSET, self._file_size - self._ENTRIES_OFFSET)
+    def ExtendPCR17 (self):
+        if self.PolicyControl () and self._TB_POLCTL_EXTEND_PCR17:
+            return True
+        else:
+            return False
         
 def pp_bytearray(pbytearray):
     printbuf = list ()
