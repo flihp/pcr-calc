@@ -1,0 +1,80 @@
+#!/usr/bin/env python
+#
+# Copyright 2013 Philip Tricca <flihp@twobit.us>
+#
+
+import argparse
+import base64
+import hashlib
+import exceptions
+import sys
+
+sys.path.insert(1, '@pythondir@/@PACKAGE@')
+
+import txt
+
+def main():
+    description = 'calculate SinitMleData.SinitHash from ACM blob'
+    acm_help = "path to ACM file"
+    mmap_help = 'access file through mmap'
+    smd_help = "Sinit to Mle Data Table Version.  Default is version 8."
+    ver_help = 'version information'
+    ver_str = '%(prog)s: @PACKAGE@ @VERSION@'
+
+    parser = argparse.ArgumentParser(description=description)
+    parser.add_argument('acm', help=acm_help)
+    parser.add_argument('-m', '--mmap', help=mmap_help, action='store_true')
+    parser.add_argument('-s', '--smd', default=8, help=smd_help, type=int)
+    parser.add_argument('-v', '--version', help=ver_help, action='version', version=ver_str)
+    args = parser.parse_args()
+
+    f = open (args.acm, 'rb')
+    acm = txt.acmParse (f, args.mmap)
+
+    if args.smd > 6:
+        acmhash = hashlib.sha256 ()
+    else:
+        acmhash = hashlib.sha1 ()
+    acmhash.update (acm.ModuleType_Bytes ())
+    acmhash.update (acm.ModuleSubType_Bytes ())
+    acmhash.update (acm.HeaderLen_Bytes ())
+    acmhash.update (acm.HeaderVersion_Bytes ())
+    acmhash.update (acm.ChipsetID_Bytes ())
+    acmhash.update (acm.Flags_Bytes ())
+    acmhash.update (acm.ModuleVendor_Bytes ())
+    acmhash.update (acm.Date_Bytes ())
+    acmhash.update (acm.Size_Bytes ())
+    acmhash.update (acm.Reserved1_Bytes ())
+    acmhash.update (acm.CodeControl_Bytes ())
+    acmhash.update (acm.ErrorEntryPoint_Bytes ())
+    acmhash.update (acm.GDTLimit_Bytes ())
+    acmhash.update (acm.GDTBasePtr_Bytes ())
+    acmhash.update (acm.SegSel_Bytes ())
+    acmhash.update (acm.EntryPoint_Bytes ())
+    acmhash.update (acm.Reserved2 ())
+    acmhash.update (acm.KeySize_Bytes ())
+    acmhash.update (acm.ScratchSize_Bytes ())
+    # These are the fields we don't hash.  See section A.1.2 of the Intel MLE
+    #   Developer's Guide for details.
+    # acmhash.update (acm.RSAPubKey ())
+    # acmhash.update (acm.RSAPubExp_Bytes ())
+    # acmhash.update (acm.RSASig ())
+    # acmhash.update (acm.Scratch ())
+    acmhash.update (acm.UserArea ())
+
+    # Calculate HASH_DATA for first extend of PCR[17]:
+    # Assume SinitMleData.EdxSenterFlags is 4 bytes of 0's
+    print 'sha256 (acm):\n  {0}'.format (acmhash.hexdigest ())
+    hash_data = hashlib.sha1 ()
+    hash_data.update (acmhash.digest ())
+    hash_data.update (base64.b16decode(b'00000000'))
+
+    # Value of PCR[17] after initial extend = SinitMleData.SinitHash
+    #   PCR[17] is initialized to 20 bytes of 0's on platform reset.
+    # SinitMleData.SinitHash = sha1 (pcr[17] | HASH_DATA)
+    pcr17 = txt.pcrEmu ()
+    pcr17.extend (hash_data.digest ())
+    print "SinitMleData.SinitHash:\n  {0}".format (pcr17.hexread ())
+
+if __name__ == "__main__":
+   main ()
