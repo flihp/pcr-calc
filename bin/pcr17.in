@@ -90,6 +90,7 @@ def main():
     if ns.heapfile == '/dev/mem':
         dev_mem = True
 
+    # read and parse TXT Heap
     try:
         fd_heapfile = open (ns.heapfile, 'rb')
     except IOError as e:
@@ -108,6 +109,23 @@ def main():
             heap = txt.txtHeap (fd_heapfile, ns.mmap, 0, file_size)
     except IOError as e:
         sys.stderr.write ('Exception getting TXT Heap: {0}\n'.format (e))
+        sys.exit (1)
+
+    # read and parse LCP policy
+    if ns.lcpfile:
+        try:
+            fd_lcp = open (ns.lcpfile, 'rb')
+        except IOError as e:
+            sys.stderr.write ('Error opening {0} for reading: \"{1}\" ... Abort\n'.format(e.filename, e.strerror))
+            sys.exit (1)
+    else:
+        print 'no LCP file'
+        sys.exit (0)
+
+    try:
+        lcp_pol = txt.launchCtrlPol (fd_lcp, True)
+    except IOError as e:
+        sys.stderr.write ('Error mapping LCP ... Abort')
         sys.exit (1)
 
     sinit_mle = txt.sinitMleData (heap.SinitMleData ())
@@ -141,11 +159,16 @@ def main():
 
     os_sinit = txt.osSinitData (heap.OsSinitData ())
 
-    print 'append Capabilities_Bytes:'
-    for _bytestr in txt.pp_bytearray (os_sinit.Capabilities_Bytes ()):
-        print "    {0}".format (_bytestr)
-#    extend2.update (os_sinit.Capabilities_Bytes ())
-    extend2.update (base64.b16decode ('00000000'))
+    print 'append Capabilities_Bytes: {0}'.format (lcp_pol.ExtendPCR17_OsSinitCaps ())
+    # include OsSinit.Capabilities in hash if LCP Policy Control bit 2 agrees
+    if (lcp_pol.ExtendPCR17_OsSinitCaps ()):
+        for _bytestr in txt.pp_bytearray (os_sinit.Capabilities_Bytes ()):
+            print "    {0}".format (_bytestr)
+        extend2.update (os_sinit.Capabilities_Bytes ())
+    else:
+        print '  Hashing 4 bytes of 0s in place of OsSinit.Capabilities'
+        extend2.update (base64.b16decode ('00000000'))
+
     if ns.smd >= 8:
         print 'append ProcScrtmStatus_Bytes:'
         for _bytestr in txt.pp_bytearray (sinit_mle.ProcScrtmStatus_Bytes ()):
@@ -156,24 +179,8 @@ def main():
     # extend PCR17 with stuff from heap
     pcr17.extend (extend2.digest ())
     print 'PCR[17]: {0}'.format (pcr17.hexread ())
-    # extend PCR17 with LCP if 
-    if ns.lcpfile:
-        try:
-            fd_lcp = open (ns.lcpfile, 'rb')
-        except IOError as e:
-            sys.stderr.write ('Error opening {0} for reading: \"{1}\" ... Abort\n'.format(e.filename, e.strerror))
-            sys.exit (1)
-    else:
-        print 'no LCP file'
-        sys.exit (0)
-
-    try:
-        lcp_pol = txt.launchCtrlPol (fd_lcp, True)
-    except IOError as e:
-        sys.stderr.write ('Error mapping LCP ... Abort')
-        sys.exit (1)
- 
-    if lcp_pol.ExtendPCR17 ():
+    # extend PCR17 with LCP hash if LCP Policy Control bit 0 agrees
+    if lcp_pol.ExtendPCR17_LCP ():
         pol_hash = hashlib.sha1 ()
         pol_hash.update (lcp_pol.Bytes ())
         print 'lcp hash: {0}'.format (pol_hash.hexdigest ())
@@ -182,7 +189,7 @@ def main():
         polctrl_hash.update (pol_hash.digest ())
         print 'polctrl + lcp hash: {0}'.format (polctrl_hash.hexdigest ())
     else:
-        print 'PolicyControl says not to extend PCR[17]'
+        print 'PolicyControl says not to extend PCR[17] with policy hash'
 
     pcr17.extend (polctrl_hash.digest ())
     print 'PCR[17] final: {0}'.format (pcr17.hexread ())

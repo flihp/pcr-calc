@@ -508,6 +508,7 @@ class launchCtrlPol (mapParse):
     _NUM_ENTRIES_LENGTH = 1
     _ENTRIES_OFFSET = _NUM_ENTRIES_OFFSET + _NUM_ENTRIES_LENGTH
     _TB_POLCTL_EXTEND_PCR17 = 0x1  # extend policy into PCR 17
+    _TB_POLCTL_EXTEND_PCR17_OSSINITCAPS = 0x2 # extend OsSinit.Capabilities into PCR 17
     def __init__ (self, pfile, pmmap=False):
         super (launchCtrlPol, self).__init__ (pfile, pmmap)
     def Bytes (self):
@@ -528,8 +529,13 @@ class launchCtrlPol (mapParse):
         return self._read_uint (self._NUM_ENTRIES_OFFSET, self._NUM_ENTRIES_LENGTH)
     def Entries (self):
         return self._read_bytes (self._ENTRIES_OFFSET, self._file_size - self._ENTRIES_OFFSET)
-    def ExtendPCR17 (self):
-        if self.PolicyControl () and self._TB_POLCTL_EXTEND_PCR17:
+    def ExtendPCR17_LCP (self):
+        if self.PolicyControl () & self._TB_POLCTL_EXTEND_PCR17:
+            return True
+        else:
+            return False
+    def ExtendPCR17_OsSinitCaps (self):
+        if self.PolicyControl () & self._TB_POLCTL_EXTEND_PCR17_OSSINITCAPS:
             return True
         else:
             return False
