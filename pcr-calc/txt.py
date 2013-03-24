@@ -125,8 +125,9 @@ class acmParse(mapParse):
     _SCRATCH_OFFSET = _RSA_SIG_OFFSET + _RSA_SIG_SIZE
     # need to know scratch size and file size to calculate UserArea stuff
 
-    def __init__ (self, pfile, pmmap=False):
+    def __init__ (self, pfile, pmmap=False, sinitmledtv=8):
         super (acmParse, self).__init__ (pfile, pmmap)
+        self._sinit_mle_dtv = sinitmledtv
 
     # public accessor functions
     def ModuleType(self):
@@ -224,6 +225,38 @@ class acmParse(mapParse):
         _userarea_offset = self._SCRATCH_OFFSET + (self.ScratchSize () * 4)
         _userarea_size = self._file_size - _userarea_offset
         return self._read_bytes (_userarea_offset, _userarea_size)
+    def _HashObj (self):
+        if self._sinit_mle_dtv > 6:
+            acmhash = hashlib.sha256 ()
+        else:
+            acmhash = hashlib.sha1 ()
+        # We don't hash these fields: RSAPubKey, RSAPubExp, RSASig, Scratch 
+        # See section A.1.2 of the Intel MLE Developer's Guide for details.
+        acmhash.update (self.ModuleType_Bytes ())
+        acmhash.update (self.ModuleSubType_Bytes ())
+        acmhash.update (self.HeaderLen_Bytes ())
+        acmhash.update (self.HeaderVersion_Bytes ())
+        acmhash.update (self.ChipsetID_Bytes ())
+        acmhash.update (self.Flags_Bytes ())
+        acmhash.update (self.ModuleVendor_Bytes ())
+        acmhash.update (self.Date_Bytes ())
+        acmhash.update (self.Size_Bytes ())
+        acmhash.update (self.Reserved1_Bytes ())
+        acmhash.update (self.CodeControl_Bytes ())
+        acmhash.update (self.ErrorEntryPoint_Bytes ())
+        acmhash.update (self.GDTLimit_Bytes ())
+        acmhash.update (self.GDTBasePtr_Bytes ())
+        acmhash.update (self.SegSel_Bytes ())
+        acmhash.update (self.EntryPoint_Bytes ())
+        acmhash.update (self.Reserved2 ())
+        acmhash.update (self.KeySize_Bytes ())
+        acmhash.update (self.ScratchSize_Bytes ())
+        acmhash.update (self.UserArea ())
+        return acmhash
+    def Digest (self):
+        return self._HashObj ().digest ()
+    def HexDigest (self):
+        return self._HashObj ().hexdigest ()
 
 class pubConfRegsParse(mapParse):
     _REG_SIZE = 8 # all regs are 64 bits per the spec
