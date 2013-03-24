@@ -15,6 +15,7 @@ import txt
 def main():
     description = "Calculate PCR[17] from an Authenticated Code Module (ACM) and whatever data is needed"
     acm_help = "path to ACM file"
+    edx_help = '32 bit integer in hex, representing the SENTER flags in the EDX register'
     heapfile_help = 'file to read as TXT Heap, /dev/mem is default'
     lcp_help = 'file containing binary Launch Control Policy'
     mmap_help = 'access file through mmap'
@@ -25,6 +26,7 @@ def main():
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('acm', help=acm_help)
     parser.add_argument('-v', '--version', help=ver_help, action='version', version=ver_str)
+    parser.add_argument('-e', '--edx', help=edx_help, default='0x0')
     parser.add_argument('-i', '--heapfile', help=heapfile_help, default='/dev/mem')
     parser.add_argument('-l', '--lcpfile', help=lcp_help, default=False)
     parser.add_argument('-m', '--mmap', help=mmap_help, action='store_true')
@@ -40,7 +42,7 @@ def main():
     acm = txt.acmParse (f, ns.mmap, ns.smd)
     hash_data = hashlib.sha1 ()
     hash_data.update (acm.Digest ())
-    hash_data.update (base64.b16decode(b'00000000'))
+    hash_data.update (base64.b16decode('{0:#0{1}}'.format (int (ns.edx, 16), 8)))
 
     # Value of PCR[17] after initial extend = SinitMleData.SinitHash
     #   PCR[17] is initialized to 20 bytes of 0's on platform reset.
