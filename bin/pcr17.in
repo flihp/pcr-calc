@@ -31,7 +31,12 @@ def main():
     parser.add_argument('-s', '--smd', default=8, help=smd_help, type=int)
     ns = parser.parse_args()
 
-    f = open (ns.acm, 'rb')
+    try:
+        f = open (ns.acm, 'rb')
+    except IOError as e:
+        sys.stderr.write ('Error opening {0} for reading: \"{1}\" ... Abort\n'.format(e.filename, e.strerror))
+        sys.exit (1)
+
     acm = txt.acmParse (f, ns.mmap, ns.smd)
     hash_data = hashlib.sha1 ()
     hash_data.update (acm.Digest ())
