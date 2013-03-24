@@ -16,6 +16,7 @@ import txt
 def main():
     description = 'calculate SinitMleData.SinitHash from ACM blob'
     acm_help = "path to ACM file"
+    edx_help = '32 bit integer in hex, representing the SENTER flags in the EDX register'
     mmap_help = 'access file through mmap'
     smd_help = "Sinit to Mle Data Table Version.  Default is version 8."
     ver_help = 'version information'
@@ -23,6 +24,7 @@ def main():
 
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('acm', help=acm_help)
+    parser.add_argument('-e', '--edx', help=edx_help, default='0x0')
     parser.add_argument('-m', '--mmap', help=mmap_help, action='store_true')
     parser.add_argument('-s', '--smd', default=8, help=smd_help, type=int)
     parser.add_argument('-v', '--version', help=ver_help, action='version', version=ver_str)
@@ -40,7 +42,7 @@ def main():
     acm = txt.acmParse (f, args.mmap, args.smd)
     hash_data = hashlib.sha1 ()
     hash_data.update (acm.Digest ())
-    hash_data.update (base64.b16decode(b'00000000'))
+    hash_data.update (base64.b16decode('{0:#0{1}}'.format (int (args.edx, 16), 8)))
 
     pcr17 = txt.pcrEmu ()
     pcr17.extend (hash_data.digest ())
