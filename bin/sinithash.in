@@ -28,17 +28,20 @@ def main():
     parser.add_argument('-v', '--version', help=ver_help, action='version', version=ver_str)
     args = parser.parse_args()
 
-    f = open (args.acm, 'rb')
+    try:
+        f = open (args.acm, 'rb')
+    except IOError as e:
+        sys.stderr.write ('Error opening {0} for reading: \"{1}\" ... Abort\n'.format(e.filename, e.strerror))
+        sys.exit (1)
+    
+    # Value of PCR[17] after initial extend = SinitMleData.SinitHash
+    #   PCR[17] is initialized to 20 bytes of 0's on platform reset.
+    # SinitMleData.SinitHash = sha1 (20x0s | shaX(ACM) | EDX Flags)
     acm = txt.acmParse (f, args.mmap, args.smd)
-    print 'acm.HexDigest: {0}'.format (acm.HexDigest ())
-
     hash_data = hashlib.sha1 ()
     hash_data.update (acm.Digest ())
     hash_data.update (base64.b16decode(b'00000000'))
 
-    # Value of PCR[17] after initial extend = SinitMleData.SinitHash
-    #   PCR[17] is initialized to 20 bytes of 0's on platform reset.
-    # SinitMleData.SinitHash = sha1 (pcr[17] | HASH_DATA)
     pcr17 = txt.pcrEmu ()
     pcr17.extend (hash_data.digest ())
     print "SinitMleData.SinitHash:\n  {0}".format (pcr17.hexread ())
