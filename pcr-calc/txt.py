@@ -226,6 +226,7 @@ class acmParse(mapParse):
         _userarea_size = self._file_size - _userarea_offset
         return self._read_bytes (_userarea_offset, _userarea_size)
     def _HashObj (self):
+        # select hash algorithm for ACM based on SINIT to MLE Data Table version
         if self._sinit_mle_dtv > 6:
             acmhash = hashlib.sha256 ()
         else:
