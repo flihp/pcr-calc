@@ -1,3 +1,6 @@
+Version 0.1 - 2013-03-24
+* ability to parse and hash LCP policy
+* full calculation of PCR[17] from ACM, TXT Heap and LCP
 Version 0.1 - 2013-03-17
 * ability to parse bits of TXT heap necessary for PCR[17] calculation
 * ability to dump TXT heap from /dev/mem to binary file for offline analysis
