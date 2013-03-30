@@ -62,15 +62,18 @@ def main ():
     print 'acm_hash:\n  {0}'.format (acm_sha256.encode ('hex'))
 
     first_hash.update (acm_sha256)
+    # flags in EDX, assume all 0's
     first_hash.update (bytes4zero)
     print 'sha1 (sha256 (acm) | edx):\n  {0}'.format (first_hash.hexdigest ())
 
+    # emulate extending PCR initialized to 0's (20 bytes) with 'first hash'
     second_hash = hashlib.sha1 ()
     second_hash.update (bytes20zero)
     second_hash.update (first_hash.digest ())
     print 'extend1 = sha1 (pcr[17] | sha1 (sha256 (acm) | edx)):\n  {0}'.format (second_hash.hexdigest ())
     # end first extend
 
+    # value taken from TXT heap (sinit to mle data table) on Intel DQ67EP
     bios_acm = base64.b16decode ('80000000201010220000b001ffffffffffffffff', True)
     mseg_valid = bytes8zero
     stm_hash = bytes20zero
@@ -106,12 +109,14 @@ def main ():
 
     # LCP & Policy Control hash
     policy_control = base64.b16decode ('01000000', True)
+    # magic hash of 'default policy' hard coded into tboot
     pol_hash = base64.b16decode ('ab41624e7d71f068d48e1c2f43e616bf40671c39', True)
     vl_hash = hashlib.sha1 ()
     vl_hash.update (policy_control)
     vl_hash.update (pol_hash)
     print 'lcp_sha1 = sha1 (policy_control | LCP hash)\n  {0}'.format (vl_hash.hexdigest ())
 
+    # final extend with LCP
     fifth_hash = hashlib.sha1 ()
     fifth_hash.update (fourth_hash.digest ())
     fifth_hash.update (vl_hash.digest ())
