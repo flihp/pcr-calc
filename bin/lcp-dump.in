@@ -35,7 +35,8 @@ def main():
         sys.exit (1)
 
     # dump bits from the LCP that are hashed in PCR[17]
-    print 'Extend PCR[17]: {0}'.format (lcp_pol.ExtendPCR17 ())
+    print 'Extend PCR[17] with LCP: {0}'.format (lcp_pol.ExtendPCR17_LCP ())
+    print 'Extend PCR[17] with OsSinitCaps: {0}'.format (lcp_pol.ExtendPCR17_OsSinitCaps ())
     print 'PolicyControl:  {0:#0{1}x}'.format (lcp_pol.PolicyControl (), lcp_pol._POLICY_CONTROL_LENGTH + 2)
     print 'Policy Bytes:'
     for _bytestr in txt.pp_bytearray (lcp_pol.Bytes ()):
