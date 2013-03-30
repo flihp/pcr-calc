@@ -587,6 +587,51 @@ def pp_bytearray(pbytearray):
             printbuf.append (str ())
     return printbuf
 
+def pp_acmFlags (flags):
+    print "  Flags raw:      {0}".format (flags.Raw ())
+    print "    Production:   {0}".format (flags.Production ())
+    print "    Pre Prod:     {0}".format (flags.PreProduction ())
+    print "    Prod Sig:     {0}".format (flags.ProductionSigned ())
+    print "    Debug Sig:    {0}".format (flags.DebugSigned ())
+
+def pp_ACM (acm):
+    print "  ModuleType:     {0}".format (acm.ModuleType ())
+    print "  ModuleSubType:  {0}".format (acm.ModuleSubType ())
+    print "  HeaderLen:      {0}".format (acm.HeaderLen ())
+    print "  HeaderVersion:  {0}".format (acm.HeaderVersion ())
+    print "  ChipsetID:      {0}".format (acm.ChipsetID ())
+    pp_acmFlags (acm.Flags ())
+    print "  ModuleVnedor:   {0}".format (hex (acm.ModuleVendor ()))
+    print "  Date:           {0}".format (hex (acm.Date ()))
+    print "  DateObj:        {0}".format (acm.DateObj ())
+    print "  Size:           {0}".format (acm.Size ())
+    print "  Size (bytes):   {0}".format (str (acm.Size () * 4))
+    print "  Reserved1:      {0}".format (acm.Reserved1 ())
+    print "  CodeControl:    {0}".format (acm.CodeControl ())
+    print "  ErrorEntryPoint:{0}".format (acm.ErrorEntryPoint ())
+    print "  GDTLimit:       {0}".format (acm.GDTLimit ())
+    print "  GDTBasePtr:     {0}".format (acm.GDTBasePtr ())
+    print "  SegSel:         {0}".format (acm.SegSel ())
+    print "  EntryPoint:     {0}".format (acm.EntryPoint ())
+    print "  Reserved2:"
+    for _bytestr in pp_bytearray (acm.Reserved2 ()):
+        print "    {0}".format (_bytestr)
+    print "  KeySize:        {0}".format (acm.KeySize ())
+    print "  ScratchSize:    {0}".format (acm.ScratchSize ())
+    print "  RSAPubKey:"
+    for _bytestr in pp_bytearray (acm.RSAPubKey ()):
+        print "    {0}".format (_bytestr)
+    print "  RSAPubExp:      {0}".format (acm.RSAPubExp ())
+    print "  RSASig:"
+    for _bytestr in pp_bytearray (acm.RSASig ()):
+        print "    {0}".format (_bytestr)
+    print "  Scratch:"
+    for _bytestr in pp_bytearray (acm.Scratch ()):
+        print "    {0}".format (_bytestr)
+    print "  UserArea:"
+    for _bytestr in pp_bytearray (acm.UserArea ()):
+        print "    {0}".format (_bytestr)
+
 def pp_PubConfRegs (regs):
     print 'TXT Public Config Registers:'
     print '  Status:         {0:#0{1}x}'.format (regs.Status (), regs._REG_SIZE * 2 + 2)
