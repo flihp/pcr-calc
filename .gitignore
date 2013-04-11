@@ -3,20 +3,20 @@
 Makefile.in
 Makefile
 
-/autom4te.cache
-/aclocal.m4
-/compile
-/config.log
-/config.status
-/configure
-/install-sh
-/missing
-/py-compile
+autom4te.cache
+aclocal.m4
+compile
+config.log
+config.status
+configure
+install-sh
+missing
+py-compile
 
-/bin/acm-dump
-/bin/lcp-dump
-/bin/pcr17
-/bin/pcr18
-/bin/pcr19
-/bin/sinithash
-/bin/txtheap-dump
+bin/acm-dump
+bin/lcp-dump
+bin/pcr17
+bin/pcr18
+bin/pcr19
+bin/sinithash
+bin/txtheap-dump
