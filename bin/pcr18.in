@@ -1,0 +1,57 @@
+#!/usr/bin/env python
+#
+# Copyright 2013 Philip Tricca <flihp@twobit.us>
+#
+
+import argparse
+import base64
+import sys
+
+sys.path.insert(1, '@pythondir@/@PACKAGE@')
+
+import txt
+
+def main():
+    description = "Calculate PCR[18] from a TXT Heap"
+    heapfile_help = 'file to read as TXT Heap, /dev/mem is default'
+    mmap_help = 'access file through mmap'
+    ver_help = "version information"
+    ver_str = "%(prog)s: @PACKAGE@ @VERSION@"
+
+    parser = argparse.ArgumentParser(description=description)
+    parser.add_argument('heapfile', help=heapfile_help, default='/dev/mem')
+    parser.add_argument('-v', '--version', help=ver_help, action='version', version=ver_str)
+    parser.add_argument('-m', '--mmap', help=mmap_help, action='store_true')
+    args = parser.parse_args()
+
+    dev_mem = False
+    if args.heapfile == '/dev/mem':
+        dev_mem = True
+
+    try:
+        fd = open (args.heapfile, 'rb')
+    except IOError as e:
+        sys.stderr.write ('Error opening {0} for reading: \"{1}\" ... Abort\n'.format(e.filename, e.strerror))
+        sys.exit (1)
+
+    try:
+        if dev_mem:
+            txtPubRegs = txt.pubConfRegsParse (fd, args.mmap, dev_mem)
+            heap = txt.txtHeap (fd, args.mmap, txtPubRegs.HeapBase (), txtPubRegs.HeapSize ())
+        else:
+            fd.seek (0,2)
+            file_size = fd.tell ()
+            fd.seek (0)
+            heap = txt.txtHeap (fd, args.mmap, 0, file_size)
+    except IOError as e:
+        sys.stderr.write ('Exception getting TXT Heap: {0}\n'.format (e))
+        sys.exit (1)
+
+    sinit_mle = txt.sinitMleData (heap.SinitMleData ())
+    pcr18 = txt.pcrEmu ()
+    pcr18.extend (sinit_mle.MleHash ())
+    print 'PCR[18]: {0}'.format (pcr18.hexread ())
+    sys.exit (0)
+
+if __name__ == "__main__":
+    main()

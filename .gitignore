@@ -16,5 +16,6 @@ Makefile
 /bin/acm-dump
 /bin/lcp-dump
 /bin/pcr17
+/bin/pcr18
 /bin/sinithash
 /bin/txtheap-dump
