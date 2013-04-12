@@ -10,6 +10,10 @@ sys.path.insert(1, '@pythondir@/@PACKAGE@')
 
 import txt
 
+msg_pcr = 'PCR[18]: {0}'
+err_open = 'Error opening {0} for reading: \"{1}\" ... Abort\n'
+err_heap = 'Error reading TXT Heap: {0}\n'
+
 def main():
     description = "Calculate PCR[18] from a TXT Heap"
     heapfile_help = 'file to read as TXT Heap, /dev/mem is default'
@@ -30,7 +34,7 @@ def main():
     try:
         fd = open (args.heapfile, 'rb')
     except IOError as e:
-        sys.stderr.write ('Error opening {0} for reading: \"{1}\" ... Abort\n'.format(e.filename, e.strerror))
+        sys.stderr.write (err_open.format(e.filename, e.strerror))
         sys.exit (1)
 
     try:
@@ -43,13 +47,13 @@ def main():
             fd.seek (0)
             heap = txt.txtHeap (fd, args.mmap, 0, file_size)
     except IOError as e:
-        sys.stderr.write ('Exception getting TXT Heap: {0}\n'.format (e))
+        sys.stderr.write (err_heap.format (e))
         sys.exit (1)
 
     sinit_mle = txt.sinitMleData (heap.SinitMleData ())
     pcr18 = txt.pcrEmu ()
     pcr18.extend (sinit_mle.MleHash ())
-    print 'PCR[18]: {0}'.format (pcr18.hexread ())
+    print msg_pcr.format (pcr18.hexread ())
     sys.exit (0)
 
 if __name__ == "__main__":
