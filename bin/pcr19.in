@@ -5,11 +5,17 @@
 
 import argparse
 import base64
+import hashlib
 import sys
 
 sys.path.insert(1, '@pythondir@/@PACKAGE@')
 
 import txt
+
+msg_extend = 'extending PCR[19] with: {0}'
+msg_pcr = 'PCR[19]: {0}'
+err_hash = 'Error hashing module {0}: "{1}" ... Abort\n'
+err_read = 'Error opening {0} for reading: \"{1}\" ... Abort\n'
 
 def main():
     description = 'Calculate PCR[19] from modules.'
@@ -22,6 +28,24 @@ def main():
     parser.add_argument('-v', '--version', help=ver_help, action='version', version=ver_str)
     args = parser.parse_args()
 
+    pcr19 = txt.pcrEmu ()
+    for module in args.modules:
+        try:
+            fd = open (module, 'rb')
+        except IOError as e:
+            sys.stderr.write (err_read.format(e.filename, e.strerror))
+            sys.exit (1)
+
+        hasher = hashlib.sha1 ()
+        try:
+            hasher.update (fd.read ())
+            print msg_extend.format (hasher.hexdigest ())
+            pcr19.extend (hasher.digest ())
+        except IOError as e:
+            sys.stderr.write (err_hash.format (e.filename, e.strerror))
+            sys.exit (1)
+
+    print msg_pcr.format (pcr19.hexread ())
     sys.exit (0)
 
 if __name__ == "__main__":
