@@ -1,3 +1,6 @@
+2013-04-12  Philip Tricca <flihp@twobit.us>
+	* pcr18: add script to calculate PCR[18]
+	* pcr19: add script to calculate PCR[19]
 2013-93-24  Philip Tricca <flihp@twobit.us>
 	* txt.py: added classes for parsing LCP policy, factored a bunch of stuff around
 	* sinithash: simple utility for getting ACM hash
