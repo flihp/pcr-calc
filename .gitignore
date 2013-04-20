@@ -18,5 +18,6 @@ bin/lcp-dump
 bin/pcr17
 bin/pcr18
 bin/pcr19
+bin/pcremu
 bin/sinithash
 bin/txtheap-dump

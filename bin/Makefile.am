@@ -1,6 +1,6 @@
-bin_SCRIPTS = acm-dump lcp-dump pcr17 pcr18 pcr19 sinithash txtheap-dump
+bin_SCRIPTS = acm-dump lcp-dump pcr17 pcr18 pcr19 pcremu sinithash txtheap-dump
 CLEANFILES = $(bin_SCRIPTS)
-EXTRA_DIST = acm-dump.in lcp-dump.in pcr17.in pcr18.in pcr19.in sinithash txtheap-dump.in
+EXTRA_DIST = acm-dump.in lcp-dump.in pcr17.in pcr18.in pcr19.in pcremu.insinithash txtheap-dump.in
 SUFFIXES = .in
 
 do_subst = sed -e 's,[@]pythondir[@],$(pythondir),g' \
@@ -12,6 +12,7 @@ lcp-dump: lcp-dump.in Makefile
 pcr17: pcr17.in Makefile
 pcr18: pcr18.in Makefile
 pcr19: pcr19.in Makefile
+pcremu: pcremu.in Makefile
 sinithash: sinithash.in Makefile
 txtheap-dump: txtheap-dump.in Makefile
 
