@@ -48,8 +48,13 @@ def main():
     #   PCR[17] is initialized to 20 bytes of 0's on platform reset.
     # SinitMleData.SinitHash = sha1 (pcr[17] | HASH_DATA)
     pcr17 = txt.pcrEmu ()
+    print "first extend: SINIT ACM hash"
+    print "  extending with: {0}".format (hash_data.hexdigest ())
+    print "  PCR[17] before extend: {0}".format (pcr17.hexread ())
     pcr17.extend (hash_data.digest ())
-    print "SinitMleData.SinitHash: {0}".format (pcr17.hexread ())
+    # this value is in the TXT heap as the SinitMleData.SinitHash
+    # the sinitMleData object should have this value in the SinitHash () field
+    print "  PCR[17] after extend: {0}".format (pcr17.hexread ())
 
     dev_mem = False
     if ns.heapfile == '/dev/mem':
@@ -95,69 +100,76 @@ def main():
 
     sinit_mle = txt.sinitMleData (heap.SinitMleData ())
 
-    print 'sinit_mle.SintHash:'
-    for _bytestr in txt.pp_bytearray (sinit_mle.SinitHash ()):
-        print "    {0}".format (_bytestr)
+    if sinit_mle.SinitHash () != pcr17.read ():
+        print 'WARNING:  Your calculated ACM hash does not match the hash from the provided TXT heap.  Likely this means that the ACM used in the measured launch that produced the provided TXT heap is not the same as the one provided to this program.  The expected value of PCR[17] after the first extend according to the provided TXT heap is:'
+        for _bytestr in txt.pp_bytearray (sinit_mle.SinitHash ()):
+            print '    {0}'.format (_bytestr)
+        sys.exit (1)
     
     # hash stuff from the heap
     extend2 = hashlib.sha1 ()
-    print 'append BiosAcmId'
+    print 'second extend: TXT heap data'
+    print '  append BiosAcmId:'
     for _bytestr in txt.pp_bytearray (sinit_mle.BiosAcmId ()):
         print "    {0}".format (_bytestr)
     extend2.update (sinit_mle.BiosAcmId ())
-    print 'append MsegValid_Bytes:'
+    print '  append MsegValid_Bytes:'
     for _bytestr in txt.pp_bytearray (sinit_mle.MsegValid_Bytes ()):
         print "    {0}".format (_bytestr)
     extend2.update (sinit_mle.MsegValid_Bytes ())
-    print 'append StmHash:'
+    print '  append StmHash:'
     for _bytestr in txt.pp_bytearray (sinit_mle.StmHash ()):
         print "    {0}".format (_bytestr)
     extend2.update (sinit_mle.StmHash ())
-    print 'append PolicyControl_Bytes:'
+    print '  append PolicyControl_Bytes:'
     for _bytestr in txt.pp_bytearray (sinit_mle.PolicyControl_Bytes ()):
         print "    {0}".format (_bytestr)
     extend2.update (sinit_mle.PolicyControl_Bytes ())
-    print 'append LcpPolicyHash:'
+    print '  append LcpPolicyHash:'
     for _bytestr in txt.pp_bytearray (sinit_mle.LcpPolicyHash ()):
         print "    {0}".format (_bytestr)
     extend2.update (sinit_mle.LcpPolicyHash ())
 
     os_sinit = txt.osSinitData (heap.OsSinitData ())
 
-    print 'append Capabilities_Bytes: {0}'.format (lcp_pol.ExtendPCR17_OsSinitCaps ())
+    print '  append Capabilities_Bytes: {0}'.format (lcp_pol.ExtendPCR17_OsSinitCaps ())
     # include OsSinit.Capabilities in hash if LCP Policy Control bit 2 agrees
     if (lcp_pol.ExtendPCR17_OsSinitCaps ()):
         for _bytestr in txt.pp_bytearray (os_sinit.Capabilities_Bytes ()):
             print "    {0}".format (_bytestr)
         extend2.update (os_sinit.Capabilities_Bytes ())
     else:
-        print '  Hashing 4 bytes of 0s in place of OsSinit.Capabilities'
+        print '    Hashing 4 bytes of 0s in place of OsSinit.Capabilities'
         extend2.update (base64.b16decode ('00000000'))
 
     if ns.smd >= 8:
-        print 'append ProcScrtmStatus_Bytes:'
+        print '  append ProcScrtmStatus_Bytes:'
         for _bytestr in txt.pp_bytearray (sinit_mle.ProcScrtmStatus_Bytes ()):
             print "    {0}".format (_bytestr)
         extend2.update (sinit_mle.ProcScrtmStatus_Bytes ())
 
-    print 'extend2: {0}'.format (extend2.hexdigest ())
+    print '  extending with: {0}'.format (extend2.hexdigest ())
     # extend PCR17 with stuff from heap
+    print '  PCR[17] before extend: {0}'.format (pcr17.hexread ())
     pcr17.extend (extend2.digest ())
-    print 'PCR[17]: {0}'.format (pcr17.hexread ())
+    print '  PCR[17]: {0}'.format (pcr17.hexread ())
     # extend PCR17 with LCP hash if LCP Policy Control bit 0 agrees
     if lcp_pol.ExtendPCR17_LCP ():
+        print 'third extend: LCP'
         pol_hash = hashlib.sha1 ()
         pol_hash.update (lcp_pol.Bytes ())
-        print 'lcp hash: {0}'.format (pol_hash.hexdigest ())
+        print '  lcp hash: {0}'.format (pol_hash.hexdigest ())
         polctrl_hash = hashlib.sha1 ()
         polctrl_hash.update (lcp_pol.PolicyControl_Bytes ())
+        print '  polctrl: {0}'.format (lcp_pol.PolicyControl ())
         polctrl_hash.update (pol_hash.digest ())
-        print 'polctrl + lcp hash: {0}'.format (polctrl_hash.hexdigest ())
+        print '  extending with: {0}'.format (polctrl_hash.hexdigest ())
+        print '  PCR[17] before extend: {0}'.format (pcr17.hexread ())
+        pcr17.extend (polctrl_hash.digest ())
+        print '  PCR[17] after extend: {0}'.format (pcr17.hexread ())
+        print '\nPCR[17] final: {0}'.format (pcr17.hexread ())
     else:
-        print 'PolicyControl says not to extend PCR[17] with policy hash'
-
-    pcr17.extend (polctrl_hash.digest ())
-    print 'PCR[17] final: {0}'.format (pcr17.hexread ())
+        print 'PolicyControl says not to extend PCR[17] with policy hash, no third extend?'
 
     sys.exit (0)
 
