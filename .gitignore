@@ -9,11 +9,15 @@ compile
 config.log
 config.status
 configure
+depcomp
 install-sh
 missing
 py-compile
 
+bin/.deps
 bin/acm-dump
+bin/lcp-def
+bin/lcp-def.o
 bin/lcp-dump
 bin/pcr17
 bin/pcr18
