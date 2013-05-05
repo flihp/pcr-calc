@@ -1,3 +1,4 @@
+bin_PROGRAMS = lcp-def
 bin_SCRIPTS = acm-dump lcp-dump pcr17 pcr18 pcr19 pcremu sinithash txtheap-dump
 CLEANFILES = $(bin_SCRIPTS)
 EXTRA_DIST = acm-dump.in lcp-dump.in pcr17.in pcr18.in pcr19.in pcremu.insinithash txtheap-dump.in
