@@ -4,6 +4,7 @@
 #
 
 import argparse
+import hashlib
 import sys
 
 sys.path.insert(1, '@pythondir@/@PACKAGE@')
@@ -14,10 +15,33 @@ msg_pcr = 'PCR[18]: {0}'
 err_open = 'Error opening {0} for reading: \"{1}\" ... Abort\n'
 err_heap = 'Error reading TXT Heap: {0}\n'
 
-def main():
+def hash_module (cmdline, fd_module):
+    '''  from tboot-1.7.3/tboot/common/policy.c
+    cmdline is first stripped of leading spaces, file name, then
+    any spaces until the next non-space char
+    (e.g. "  /foo/bar   baz" -> "baz"; "/foo/bar" -> "") '''
+    cmdline = cmdline.strip ().rstrip ()
+    cmdline = cmdline [cmdline.index (' '):].strip ()
+
+    ''' from tboot-1.7.3/tboot/common/policy.c
+    final hash is SHA-1( SHA-1(cmdline) | SHA-1(image) ) '''
+    cmd_hash = hashlib.sha1 ()
+    mod_hash = hashlib.sha1 ()
+    both_hash = hashlib.sha1 ()
+    cmd_hash.update (cmdline)
+    ''' assume module is small enough to cache, may need to hash in chunks
+    to accomodate larger modules'''
+    mod_hash.update (fd_module.read ())
+    both_hash.update (cmd_hash.digest ())
+    both_hash.update (mod_hash.digest ())
+    return both_hash
+
+def get_args ():
     description = "Calculate PCR[18] from a TXT Heap"
+    cmd_help = 'file containing command line for module'
     heapfile_help = 'file to read as TXT Heap, /dev/mem is default'
     mmap_help = 'access file through mmap'
+    mod_help = 'module file'
     ver_help = "version information"
     ver_str = "%(prog)s: @PACKAGE@ @VERSION@"
 
@@ -25,35 +49,67 @@ def main():
     parser.add_argument('heapfile', help=heapfile_help, default='/dev/mem')
     parser.add_argument('-v', '--version', help=ver_help, action='version', version=ver_str)
     parser.add_argument('-m', '--mmap', help=mmap_help, action='store_true')
-    args = parser.parse_args()
+    parser.add_argument('-o', '--module', help=mod_help)
+    parser.add_argument('-c', '--cmdline', help=cmd_help)
+    return parser.parse_args()
 
-    dev_mem = False
-    if args.heapfile == '/dev/mem':
-        dev_mem = True
-
+def open_file (fname, mode):
     try:
-        fd = open (args.heapfile, 'rb')
+        fd = open (fname, mode)
     except IOError as e:
         sys.stderr.write (err_open.format(e.filename, e.strerror))
         sys.exit (1)
+    return fd
+
+def get_txt_heap (fd, mmap):
+    dev_mem = False
+    if fd.name == '/dev/mem':
+        dev_mem = True
 
     try:
         if dev_mem:
-            txtPubRegs = txt.pubConfRegsParse (fd, args.mmap, dev_mem)
-            heap = txt.txtHeap (fd, args.mmap, txtPubRegs.HeapBase (), txtPubRegs.HeapSize ())
+            txtPubRegs = txt.pubConfRegsParse (fd, mmap, dev_mem)
+            heap = txt.txtHeap (fd, mmap, txtPubRegs.HeapBase (), txtPubRegs.HeapSize ())
         else:
             fd.seek (0,2)
             file_size = fd.tell ()
             fd.seek (0)
-            heap = txt.txtHeap (fd, args.mmap, 0, file_size)
+            heap = txt.txtHeap (fd, mmap, 0, file_size)
     except IOError as e:
         sys.stderr.write (err_heap.format (e))
         sys.exit (1)
+    return heap
 
-    sinit_mle = txt.sinitMleData (heap.SinitMleData ())
+def get_sinit_mle (txt_heap):
+    try:
+        sinit_mle = txt.sinitMleData (txt_heap.SinitMleData ())
+        print 'sinit_mle.MleHash:'
+        for _bytestr in txt.pp_bytearray (sinit_mle.MleHash ()):
+            print "    {0}".format (_bytestr)
+    except IOError as e:
+        sys.stderr.write (err_open.format (e.filename, e.strerror))
+        sys.exit (1)
+    return sinit_mle
+
+def main():
+    args = get_args ()
+    fd = open_file (args.heapfile, 'rb')
+    heap = get_txt_heap (fd, args.mmap)
+    sinit_mle = get_sinit_mle (heap)
+
+    fd_cmdline = open_file (args.cmdline, 'r')
+    fd_module = open_file (args.module, 'rb')
+
+    mod_hash = hash_module (fd_cmdline.readline (), fd_module)
+    fd_cmdline.close ()
+    fd_module.close ()
+    print 'module hash: {0}'.format (mod_hash.hexdigest ())
+
     pcr18 = txt.pcrEmu ()
     pcr18.extend (sinit_mle.MleHash ())
+    pcr18.extend (mod_hash.digest ())
     print msg_pcr.format (pcr18.hexread ())
+
     sys.exit (0)
 
 if __name__ == "__main__":
