@@ -16,21 +16,27 @@ msg_pcr = 'PCR[19]: {0}'
 err_hash = 'Error hashing module {0}: "{1}" ... Abort\n'
 err_read = 'Error opening {0} for reading: \"{1}\" ... Abort\n'
 
+def string_pair (s):
+    try:
+        return map (str, s.split(','))
+    except:
+        raise argparse.ArgumentTypeError('format must be commandline,module')
+
 def main():
     description = 'Calculate PCR[19] from modules.'
-    mod_help = 'module file'
+    mod_help = 'pair of files: commandline and module separated by a comma'
     ver_help = 'version information'
     ver_str = '%(prog)s: @PACKAGE@ @VERSION@'
 
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument('modules', metavar='N', nargs='+', type=str, help=mod_help)
+    parser.add_argument('modules', metavar='N', nargs='+', type=string_pair, help=mod_help)
     parser.add_argument('-v', '--version', help=ver_help, action='version', version=ver_str)
     args = parser.parse_args()
 
     pcr19 = txt.pcrEmu ()
     for module in args.modules:
         try:
-            fd = open (module, 'rb')
+            fd = open (module [1], 'rb')
         except IOError as e:
             sys.stderr.write (err_read.format(e.filename, e.strerror))
             sys.exit (1)
