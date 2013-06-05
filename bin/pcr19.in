@@ -36,19 +36,18 @@ def main():
     pcr19 = txt.pcrEmu ()
     for module in args.modules:
         try:
-            fd = open (module [1], 'rb')
+            fd_cmdline = open (module [0], 'r')
+            fd_module = open (module [1], 'rb')
         except IOError as e:
             sys.stderr.write (err_read.format(e.filename, e.strerror))
             sys.exit (1)
 
         hasher = hashlib.sha1 ()
-        try:
-            hasher.update (fd.read ())
-            print msg_extend.format (hasher.hexdigest ())
-            pcr19.extend (hasher.digest ())
-        except IOError as e:
-            sys.stderr.write (err_hash.format (e.filename, e.strerror))
-            sys.exit (1)
+        mod_hash = txt.hash_module (fd_cmdline.readline (), fd_module)
+        fd_cmdline.close ()
+        fd_module.close ()
+        print msg_extend.format (mod_hash.hexdigest ())
+        pcr19.extend (mod_hash.digest ())
 
     print msg_pcr.format (pcr19.hexread ())
     sys.exit (0)
