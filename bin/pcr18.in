@@ -15,27 +15,6 @@ msg_pcr = 'PCR[18]: {0}'
 err_open = 'Error opening {0} for reading: \"{1}\" ... Abort\n'
 err_heap = 'Error reading TXT Heap: {0}\n'
 
-def hash_module (cmdline, fd_module):
-    '''  from tboot-1.7.3/tboot/common/policy.c
-    cmdline is first stripped of leading spaces, file name, then
-    any spaces until the next non-space char
-    (e.g. "  /foo/bar   baz" -> "baz"; "/foo/bar" -> "") '''
-    cmdline = cmdline.strip ().rstrip ()
-    cmdline = cmdline [cmdline.index (' '):].strip ()
-
-    ''' from tboot-1.7.3/tboot/common/policy.c
-    final hash is SHA-1( SHA-1(cmdline) | SHA-1(image) ) '''
-    cmd_hash = hashlib.sha1 ()
-    mod_hash = hashlib.sha1 ()
-    both_hash = hashlib.sha1 ()
-    cmd_hash.update (cmdline)
-    ''' assume module is small enough to cache, may need to hash in chunks
-    to accomodate larger modules'''
-    mod_hash.update (fd_module.read ())
-    both_hash.update (cmd_hash.digest ())
-    both_hash.update (mod_hash.digest ())
-    return both_hash
-
 def get_args ():
     description = "Calculate PCR[18] from a TXT Heap"
     cmd_help = 'file containing command line for module'
@@ -100,7 +79,7 @@ def main():
     fd_cmdline = open_file (args.cmdline, 'r')
     fd_module = open_file (args.module, 'rb')
 
-    mod_hash = hash_module (fd_cmdline.readline (), fd_module)
+    mod_hash = txt.hash_module (fd_cmdline.readline (), fd_module)
     fd_cmdline.close ()
     fd_module.close ()
     print 'module hash: {0}'.format (mod_hash.hexdigest ())

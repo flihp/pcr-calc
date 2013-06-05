@@ -713,3 +713,24 @@ class pcrEmu(object):
         return self._value
     def hexread(self):
         return self._value.encode("hex")
+
+def hash_module (cmdline, fd_module):
+    '''  from tboot-1.7.3/tboot/common/policy.c
+    cmdline is first stripped of leading spaces, file name, then
+    any spaces until the next non-space char
+    (e.g. "  /foo/bar   baz" -> "baz"; "/foo/bar" -> "") '''
+    cmdline = cmdline.strip ().rstrip ()
+    cmdline = cmdline [cmdline.index (' '):].strip ()
+
+    ''' from tboot-1.7.3/tboot/common/policy.c
+    final hash is SHA-1( SHA-1(cmdline) | SHA-1(image) ) '''
+    cmd_hash = hashlib.sha1 ()
+    mod_hash = hashlib.sha1 ()
+    both_hash = hashlib.sha1 ()
+    cmd_hash.update (cmdline)
+    ''' assume module is small enough to cache, may need to hash in chunks
+    to accomodate larger modules'''
+    mod_hash.update (fd_module.read ())
+    both_hash.update (cmd_hash.digest ())
+    both_hash.update (mod_hash.digest ())
+    return both_hash
