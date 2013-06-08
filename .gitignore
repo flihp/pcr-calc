@@ -19,6 +19,7 @@ bin/acm-dump
 bin/lcp-def
 bin/lcp-def.o
 bin/lcp-dump
+bin/module-hash
 bin/pcr17
 bin/pcr18
 bin/pcr19
