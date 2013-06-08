@@ -719,8 +719,11 @@ def hash_module (cmdline, fd_module):
     cmdline is first stripped of leading spaces, file name, then
     any spaces until the next non-space char
     (e.g. "  /foo/bar   baz" -> "baz"; "/foo/bar" -> "") '''
-    cmdline = cmdline.strip ().rstrip ()
-    cmdline = cmdline [cmdline.index (' '):].strip ()
+    try:
+        cmdline = cmdline.strip ().rstrip ()
+        cmdline = cmdline [cmdline.index (' '):].strip ()
+    except ValueError:
+        cmdline = ''
 
     ''' from tboot-1.7.3/tboot/common/policy.c
     final hash is SHA-1( SHA-1(cmdline) | SHA-1(image) ) '''
