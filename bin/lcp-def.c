@@ -226,7 +226,7 @@ main (int argc, char* argv[]) {
         exit (0);
     }
 
-    policy = da_flag ? &_def_policy_da : &_xt_policy;
+    policy = da_flag ? &_def_policy_da : &_def_policy;
 
     pol_size = calc_policy_size (policy);
     fprintf (stderr, "pol_size: %d\n", pol_size);
