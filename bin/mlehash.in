@@ -1,0 +1,33 @@
+#!/usr/bin/env python
+#
+# Copyright 2013 Philip Tricca <flihp@twobit.us>
+#
+
+import argparse
+import sys
+
+sys.path.insert(1, '@pythondir@/@PACKAGE@')
+
+def main():
+    description = 'calculate SinitMleData.MleHash from MLE ELF'
+    mle_help = 'path to MLE file'
+    arg_help = 'argument string passed to MLE'
+    ver_help = 'version information'
+    ver_str = '%(prog)s: @PACKAGE@ @VERSION@'
+
+    parser = argparse.ArgumentParser(description=description)
+    parser.add_argument('mle', help=mle_help)
+    parser.add_argument('-a', '--arg-str', default=None, help=arg_help)
+    parser.add_argument('-v', '--version', help=ver_help, action='version', version=ver_str)
+    args = parser.parse_args()
+
+    try:
+        f = open (args.mle, 'rb')
+    except IOError as e:
+        sys.stderr.write ('Error opening {0} for reading: \"{1}\" ... Abort\n'.format(e.filename, e.strerror))
+        sys.exit (1)
+
+    sys.exit (0)
+
+if __name__ == "__main__":
+    main()
