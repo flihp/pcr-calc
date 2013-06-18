@@ -1,6 +1,7 @@
 bin_PROGRAMS = lcp-def
 bin_SCRIPTS = acm-dump \
               lcp-dump \
+              mlehash \
               module-hash \
               pcr17 \
               pcr18 \
@@ -11,6 +12,7 @@ bin_SCRIPTS = acm-dump \
 CLEANFILES = $(bin_SCRIPTS)
 EXTRA_DIST = acm-dump.in \
              lcp-dump.in \
+             mlehash.in \
              module-hash.in \
              pcr17.in \
              pcr18.in \
@@ -26,6 +28,7 @@ do_subst = sed -e 's,[@]pythondir[@],$(pythondir),g' \
 
 acm-dump: acm-dump.in Makefile
 lcp-dump: lcp-dump.in Makefile
+mlehash: mlehash.in Makefile
 pcr17: pcr17.in Makefile
 pcr18: pcr18.in Makefile
 pcr19: pcr19.in Makefile
