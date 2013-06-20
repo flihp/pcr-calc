@@ -4,6 +4,8 @@
 #
 
 import argparse
+from elftools.elf.elffile import ELFFile
+from elftools.common.exceptions import ELFError
 import sys
 
 sys.path.insert(1, '@pythondir@/@PACKAGE@')
@@ -28,9 +30,17 @@ def open_file (fname, mode):
         sys.stderr.write ('unable to open file {0}: {1}\n'.format(e.filename, e.strerror))
         sys.exit (1)
 
+def get_elf (stream):
+    try:
+        return ELFFile (stream)
+    except ELFError as e:
+        sys.stderr.write ('not an ELF file: {0}\n'.format (e))
+        sys.exit (1)
+
 def main():
     args = get_args ()
     f = open_file (args.mle, 'rb')
+    mle_elf = get_elf (f)
 
     sys.exit (0)
 
