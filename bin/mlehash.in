@@ -6,6 +6,7 @@
 import argparse
 from elftools.elf.elffile import ELFFile
 from elftools.common.exceptions import ELFError
+from gzip import GzipFile
 import sys
 
 sys.path.insert(1, '@pythondir@/@PACKAGE@')
@@ -34,13 +35,26 @@ def get_elf (stream):
     try:
         return ELFFile (stream)
     except ELFError as e:
-        sys.stderr.write ('not an ELF file: {0}\n'.format (e))
+        sys.stderr.write ("ERROR: {0}\nfile must be an ELF, or gzipped ELF file\n".format (e))
         sys.exit (1)
+
+def open_gzip (fobj):
+    try:
+        gz = GzipFile (fileobj=fobj)
+        gz.read (1)
+        gz.seek (0)
+        return gz
+    except IOError as e:
+        return None
 
 def main():
     args = get_args ()
     f = open_file (args.mle, 'rb')
-    mle_elf = get_elf (f)
+    f_gzip = open_gzip (f)
+    if f_gzip is None:
+        mle_elf = get_elf (f)
+    else:
+        mle_elf = get_elf (f_gzip)
 
     sys.exit (0)
 
