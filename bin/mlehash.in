@@ -9,6 +9,7 @@ from elftools.common.exceptions import ELFError
 from gzip import GzipFile
 import mmap
 import sys
+import tempfile
 import uuid
 
 sys.path.insert(1, '@pythondir@/@PACKAGE@')
@@ -52,13 +53,25 @@ def open_gzip (fobj):
     except IOError as e:
         return None
 
+def cptmp_file (fobj):
+    try:
+        tmp_file = tempfile.TemporaryFile ()
+        tmp_file.write (fobj.read ())
+        return tmp_file
+    except IOError as e:
+        print 'failed to gunzip MLE file to a tempfile'
+        sys.exit (1)
+
 def main():
     args = get_args ()
     mle_file = open_file (args.mle, 'rb')
-    mle_mmap = mmap.mmap (mle_file.fileno (), 0, access=mmap.ACCESS_COPY)
-    gzip_file = open_gzip (mle_mmap)
+    gzip_file = open_gzip (mle_file)
     if gzip_file is not None:
-        mle_mmap = gzip_file
+        tmp_file = cptmp_file (gzip_file)
+        gzip_file.close ()
+        mle_file.close ()
+        mle_file = tmp_file
+    mle_mmap = mmap.mmap (mle_file.fileno (), 0, access=mmap.ACCESS_COPY)
     mle_elf = get_elf (mle_mmap)
     mle_mmap.seek (0)
     index = mle_mmap.find (mle_uuid.bytes)
