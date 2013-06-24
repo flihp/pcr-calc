@@ -7,9 +7,14 @@ import argparse
 from elftools.elf.elffile import ELFFile
 from elftools.common.exceptions import ELFError
 from gzip import GzipFile
+import mmap
 import sys
+import uuid
 
 sys.path.insert(1, '@pythondir@/@PACKAGE@')
+
+mle_uuid_str = '5aac8290-6f47-a774-0f5c-55a2cb51b642'
+mle_uuid = uuid.UUID (mle_uuid_str)
 
 def get_args ():
     description = 'calculate SinitMleData.MleHash from MLE ELF'
@@ -49,12 +54,16 @@ def open_gzip (fobj):
 
 def main():
     args = get_args ()
-    f = open_file (args.mle, 'rb')
-    f_gzip = open_gzip (f)
-    if f_gzip is None:
-        mle_elf = get_elf (f)
-    else:
-        mle_elf = get_elf (f_gzip)
+    mle_file = open_file (args.mle, 'rb')
+    mle_mmap = mmap.mmap (mle_file.fileno (), 0, access=mmap.ACCESS_COPY)
+    gzip_file = open_gzip (mle_mmap)
+    if gzip_file is not None:
+        mle_mmap = gzip_file
+    mle_elf = get_elf (mle_mmap)
+    mle_mmap.seek (0)
+    index = mle_mmap.find (mle_uuid.bytes)
+    if index > 0:
+        print 'found at index: {0}'.format (hex (index))
 
     sys.exit (0)
 
