@@ -75,10 +75,9 @@ def main():
     mle_elf = get_elf (mle_mmap)
     mle_mmap.seek (0)
     index = mle_mmap.find (mle_uuid.bytes)
-    if index > 0:
-        print 'found at index: {0}'.format (hex (index))
-
-    sys.exit (0)
+    if index < 0:
+        print 'file supplied is not an MLE.'
+        sys.exit (1)
 
 if __name__ == "__main__":
     main()
