@@ -10,6 +10,7 @@ from gzip import GzipFile
 import mmap
 import sys
 import tempfile
+import txt
 import uuid
 
 sys.path.insert(1, '@pythondir@/@PACKAGE@')
@@ -78,6 +79,9 @@ def main():
     if index < 0:
         print 'file supplied is not an MLE.'
         sys.exit (1)
+    mle_hdr = txt.mleHeader (mle_mmap, True, index)
+    uuid_from_mle_obj = mle_hdr.uuid ()
+    print '{0}'.format (uuid_from_mle_obj)
 
 if __name__ == "__main__":
     main()
