@@ -8,6 +8,7 @@ import hashlib
 import struct
 import datetime
 import mmap
+import uuid
 
 class acmFlags(object):
     def __init__(self, stuff):
@@ -713,6 +714,36 @@ class pcrEmu(object):
         return self._value
     def hexread(self):
         return self._value.encode("hex")
+
+class mleHeader (binParse):
+    _UUID_OFFSET = 0
+    _UUID_SIZE = 16
+
+    def __init__(self, pfile, pmmap=False, poffset=0):
+        self._offset = poffset
+        super (mleHeader, self).__init__ (pfile, pfile)
+    def uuid_bytes (self):
+        return self._read_bytes (self._offset + self._UUID_OFFSET, self._UUID_SIZE)
+    def uuid (self):
+        return uuid.UUID (bytes=str (self.uuid_bytes ()))
+    def length (self):
+        raise NotImplementedError ('mleHeader.length not implemented')
+    def version (self):
+        raise NotImplementedError ('mleHeader.version not implemented')
+    def entry_point (self):
+        raise NotImplementedError ('mleHeader.version not implemented')
+    def first_valid_page (self):
+        raise NotImplementedError ('mleHeader.first_valid_page not implemented')
+    def mle_start_off (self):
+        raise NotImplementedError ('mleHeader.mle_start_off not implemented')
+    def mle_end_off (self):
+        raise NotImplementedError ('mleHeader.mle_end_off not implemented')
+    def capabilities (self):
+        raise NotImplementedError ('mleHeader.capabilities not implemented')
+    def cmdline_start_off (self):
+        raise NotImplementedError ('mleHeader.cmdline_start_off not implemented')
+    def cmdline_end_off (self):
+        raise NotImplementedError ('mleHeader.cmdline_end_off not implemented')
 
 def hash_module (cmdline, fd_module):
     '''  from tboot-1.7.3/tboot/common/policy.c
