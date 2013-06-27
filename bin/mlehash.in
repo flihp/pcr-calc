@@ -81,6 +81,7 @@ def main():
         sys.exit (1)
     mle_hdr = txt.mleHeader (mle_mmap, True, index)
     print 'MLE UUID    : {0}'.format (mle_hdr.uuid ())
+    print 'length      : {0}'.format (mle_hdr.length ())
 
 if __name__ == "__main__":
     main()
