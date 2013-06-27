@@ -718,6 +718,8 @@ class pcrEmu(object):
 class mleHeader (binParse):
     _UUID_OFFSET = 0
     _UUID_SIZE = 16
+    _LENGTH_OFFSET = _UUID_OFFSET + _UUID_SIZE
+    _LENGTH_SIZE = 4
 
     def __init__(self, pfile, pmmap=False, poffset=0):
         self._offset = poffset
@@ -727,7 +729,7 @@ class mleHeader (binParse):
     def uuid (self):
         return uuid.UUID (bytes=str (self.uuid_bytes ()))
     def length (self):
-        raise NotImplementedError ('mleHeader.length not implemented')
+        return self._read_uint (self._offset + self._LENGTH_OFFSET, self._LENGTH_SIZE)
     def version (self):
         raise NotImplementedError ('mleHeader.version not implemented')
     def entry_point (self):
