@@ -82,6 +82,8 @@ def main():
     mle_hdr = txt.mleHeader (mle_mmap, True, index)
     print 'MLE UUID    : {0}'.format (mle_hdr.uuid ())
     print 'length      : {0}'.format (mle_hdr.length ())
+    print 'version     : {0}'.format (mle_hdr.version ())
+    print 'entry_point : {0}'.format (hex (mle_hdr.entry_point ()))
 
 if __name__ == "__main__":
     main()
