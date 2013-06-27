@@ -80,8 +80,7 @@ def main():
         print 'file supplied is not an MLE.'
         sys.exit (1)
     mle_hdr = txt.mleHeader (mle_mmap, True, index)
-    uuid_from_mle_obj = mle_hdr.uuid ()
-    print '{0}'.format (uuid_from_mle_obj)
+    print 'MLE UUID    : {0}'.format (mle_hdr.uuid ())
 
 if __name__ == "__main__":
     main()
