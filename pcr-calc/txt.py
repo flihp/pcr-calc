@@ -734,6 +734,8 @@ class mleHeader (binParse):
     _CAPABILITIES_SIZE = 4
     _CMDLINE_START_OFF_OFFSET = _CAPABILITIES_OFFSET + _CAPABILITIES_SIZE
     _CMDLINE_START_OFF_SIZE = 4
+    _CMDLINE_END_OFF_OFFSET = _CMDLINE_START_OFF_OFFSET + _CMDLINE_START_OFF_SIZE
+    _CMDLINE_END_OFF_SIZE = 4
 
     def __init__(self, pfile, pmmap=False, poffset=0):
         self._offset = poffset
@@ -759,7 +761,7 @@ class mleHeader (binParse):
     def cmdline_start_off (self):
         return self._read_uint (self._offset + self._CMDLINE_START_OFF_OFFSET, self._CMDLINE_START_OFF_SIZE)
     def cmdline_end_off (self):
-        raise NotImplementedError ('mleHeader.cmdline_end_off not implemented')
+        return self._read_uint (self._offset + self._CMDLINE_END_OFF_OFFSET, self._CMDLINE_END_OFF_SIZE)
 
 def hash_module (cmdline, fd_module):
     '''  from tboot-1.7.3/tboot/common/policy.c
