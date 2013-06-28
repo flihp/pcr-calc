@@ -85,6 +85,7 @@ def main():
     print 'version          : {0}'.format (mle_hdr.version ())
     print 'entry_point      : {0}'.format (hex (mle_hdr.entry_point ()))
     print 'first_valid_page : {0}'.format (hex (mle_hdr.first_valid_page ()))
+    print 'mle_start_off    : {0}'.format (hex (mle_hdr.mle_start_off ()))
 
 if __name__ == "__main__":
     main()
