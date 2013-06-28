@@ -724,6 +724,8 @@ class mleHeader (binParse):
     _VERSION_SIZE = 4
     _ENTRY_POINT_OFFSET = _VERSION_OFFSET + _VERSION_SIZE
     _ENTRY_POINT_SIZE = 4
+    _FIRST_VALID_PAGE_OFFSET = _ENTRY_POINT_OFFSET + _ENTRY_POINT_SIZE
+    _FIRST_VALID_PAGE_SIZE = 4
 
     def __init__(self, pfile, pmmap=False, poffset=0):
         self._offset = poffset
@@ -739,7 +741,7 @@ class mleHeader (binParse):
     def entry_point (self):
         return self._read_uint (self._offset + self._ENTRY_POINT_OFFSET, self._ENTRY_POINT_SIZE)
     def first_valid_page (self):
-        raise NotImplementedError ('mleHeader.first_valid_page not implemented')
+        return self._read_uint (self._offset + self._FIRST_VALID_PAGE_OFFSET, self._FIRST_VALID_PAGE_SIZE)
     def mle_start_off (self):
         raise NotImplementedError ('mleHeader.mle_start_off not implemented')
     def mle_end_off (self):
