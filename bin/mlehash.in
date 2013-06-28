@@ -88,6 +88,7 @@ def main():
     print 'mle_start_off    : {0}'.format (hex (mle_hdr.mle_start_off ()))
     print 'mle_end_off      : {0}'.format (hex (mle_hdr.mle_end_off ()))
     print 'capabilities     : {0}'.format (hex (mle_hdr.capabilities ()))
+    print 'cmdline_start_off: {0}'.format (hex (mle_hdr.cmdline_start_off ()))
 
 if __name__ == "__main__":
     main()
