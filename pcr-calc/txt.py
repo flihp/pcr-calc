@@ -730,6 +730,8 @@ class mleHeader (binParse):
     _MLE_START_OFF_SIZE = 4
     _MLE_END_OFF_OFFSET = _MLE_START_OFF_OFFSET + _MLE_START_OFF_SIZE
     _MLE_END_OFF_SIZE = 4
+    _CAPABILITIES_OFFSET = _MLE_END_OFF_OFFSET + _MLE_END_OFF_SIZE
+    _CAPABILITIES_SIZE = 4
 
     def __init__(self, pfile, pmmap=False, poffset=0):
         self._offset = poffset
@@ -751,7 +753,7 @@ class mleHeader (binParse):
     def mle_end_off (self):
         return self._read_uint (self._offset + self._MLE_END_OFF_OFFSET, self._MLE_END_OFF_SIZE)
     def capabilities (self):
-        raise NotImplementedError ('mleHeader.capabilities not implemented')
+        return self._read_uint (self._offset + self._CAPABILITIES_OFFSET, self._CAPABILITIES_SIZE)
     def cmdline_start_off (self):
         raise NotImplementedError ('mleHeader.cmdline_start_off not implemented')
     def cmdline_end_off (self):
