@@ -63,6 +63,25 @@ def cptmp_file (fobj):
         print 'failed to gunzip MLE file to a tempfile'
         sys.exit (1)
 
+def map_elf (infile, mle_elf):
+    try:
+        tmp_file = tempfile.TemporaryFile ()
+        for segment in mle_elf.iter_segments ():
+            if segment ['p_type'] is 'PT_LOAD':
+                _p_offset = segment ['p_offset']
+                _p_filesz = segment ['p_filesz']
+                _p_memsz  = segment ['p_memsz']
+                _elf_end = _p_offset + _p_filesz
+                # copy segment
+                tmp_file.write (infile [_p_offset : _elf_end])
+                # 0 fill remaining area
+                for a in range (_p_memsz - _p_filesz):
+                    tmp_file.write ('\x00')
+        return mmap.mmap (tmp_file.fileno (), 0, access=mmap.ACCESS_WRITE)
+    except IOError as e:
+        print 'error decompressing ELF file'
+        sys.exit (1)
+
 def main():
     args = get_args ()
     mle_file = open_file (args.mle, 'rb')
@@ -74,22 +93,14 @@ def main():
         mle_file = tmp_file
     mle_mmap = mmap.mmap (mle_file.fileno (), 0, access=mmap.ACCESS_COPY)
     mle_elf = get_elf (mle_mmap)
-    mle_mmap.seek (0)
-    index = mle_mmap.find (mle_uuid.bytes)
+    elf_mmap = map_elf (mle_mmap, mle_elf)    
+    index = elf_mmap.find (mle_uuid.bytes)
     if index < 0:
         print 'file supplied is not an MLE.'
         sys.exit (1)
-    mle_hdr = txt.mleHeader (mle_mmap, True, index)
-    print 'MLE UUID         : {0}'.format (mle_hdr.uuid ())
-    print 'length           : {0}'.format (mle_hdr.length ())
-    print 'version          : {0}'.format (mle_hdr.version ())
-    print 'entry_point      : {0}'.format (hex (mle_hdr.entry_point ()))
-    print 'first_valid_page : {0}'.format (hex (mle_hdr.first_valid_page ()))
-    print 'mle_start_off    : {0}'.format (hex (mle_hdr.mle_start_off ()))
-    print 'mle_end_off      : {0}'.format (hex (mle_hdr.mle_end_off ()))
-    print 'capabilities     : {0}'.format (hex (mle_hdr.capabilities ()))
-    print 'cmdline_start_off: {0}'.format (hex (mle_hdr.cmdline_start_off ()))
-    print 'cmdline_end_off  : {0}'.format (hex (mle_hdr.cmdline_end_off ()))
+    mle_hdr = txt.mleHeader (elf_mmap, True, index, args.arg_str)
+    mle_sha1 = mle_hdr.hash_sha1 ().hexdigest ()
+    print '{0}'.format (mle_sha1)
 
 if __name__ == "__main__":
     main()
