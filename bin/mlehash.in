@@ -23,16 +23,19 @@ class mleHash_Prog (object):
         description = 'calculate SinitMleData.MleHash from MLE ELF'
         mle_help = 'path to MLE file'
         arg_help = 'argument string passed to MLE'
+        bin_help = 'dump hash in binary form'
         ver_help = 'version information'
         ver_str = '%(prog)s: @PACKAGE@ @VERSION@'
         
         parser = argparse.ArgumentParser(description=description)
         parser.add_argument('mle', help=mle_help)
         parser.add_argument('-a', '--arg-str', default=None, help=arg_help)
+        parser.add_argument('-b', '--binary', help=bin_help, action='store_true')
         parser.add_argument('-v', '--version', help=ver_help, action='version', version=ver_str)
         args = parser.parse_args ()
         self._mle = args.mle
         self._arg_str = args.arg_str
+        self._bin_dump = args.binary
 
     def open_file (self, fname, mode):
         try:
@@ -100,8 +103,11 @@ class mleHash_Prog (object):
             print 'file supplied is not an MLE.'
             sys.exit (1)
         mle_hdr = txt.mleHeader (elf_mmap, True, index, self._arg_str)
-        mle_sha1 = mle_hdr.hash_sha1 ().hexdigest ()
-        print '{0}'.format (mle_sha1)
+        mle_sha1 = mle_hdr.hash_sha1 ()
+        if not self._bin_dump:
+            print '{0}'.format (mle_sha1.hexdigest ())
+        else:
+            sys.stdout.write (mle_sha1.digest ())
 
 if __name__ == "__main__":
     prog = mleHash_Prog ()
