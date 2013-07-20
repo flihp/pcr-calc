@@ -54,6 +54,9 @@ class mleHash_Prog (object):
     def open_gzip (self, fobj):
         try:
             gz = GzipFile (fileobj=fobj)
+            # The GzipFile obj only detects errors in gzip file format when we
+            # read on the object.  This is how we detect whether or not the
+            # file is a gzip file.
             gz.read (1)
             gz.seek (0)
             return gz
