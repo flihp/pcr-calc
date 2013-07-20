@@ -18,89 +18,91 @@ sys.path.insert(1, '@pythondir@/@PACKAGE@')
 mle_uuid_str = '5aac8290-6f47-a774-0f5c-55a2cb51b642'
 mle_uuid = uuid.UUID (mle_uuid_str)
 
-def get_args ():
-    description = 'calculate SinitMleData.MleHash from MLE ELF'
-    mle_help = 'path to MLE file'
-    arg_help = 'argument string passed to MLE'
-    ver_help = 'version information'
-    ver_str = '%(prog)s: @PACKAGE@ @VERSION@'
+class mleHash_Prog (object):
+    def __init__ (self):
+        description = 'calculate SinitMleData.MleHash from MLE ELF'
+        mle_help = 'path to MLE file'
+        arg_help = 'argument string passed to MLE'
+        ver_help = 'version information'
+        ver_str = '%(prog)s: @PACKAGE@ @VERSION@'
+        
+        parser = argparse.ArgumentParser(description=description)
+        parser.add_argument('mle', help=mle_help)
+        parser.add_argument('-a', '--arg-str', default=None, help=arg_help)
+        parser.add_argument('-v', '--version', help=ver_help, action='version', version=ver_str)
+        args = parser.parse_args ()
+        self._mle = args.mle
+        self._arg_str = args.arg_str
 
-    parser = argparse.ArgumentParser(description=description)
-    parser.add_argument('mle', help=mle_help)
-    parser.add_argument('-a', '--arg-str', default=None, help=arg_help)
-    parser.add_argument('-v', '--version', help=ver_help, action='version', version=ver_str)
-    return parser.parse_args()
+    def open_file (self, fname, mode):
+        try:
+            return open (fname, mode)
+        except IOError as e:
+            sys.stderr.write ('unable to open file {0}: {1}\n'.format(e.filename, e.strerror))
+            sys.exit (1)
 
-def open_file (fname, mode):
-    try:
-        return open (fname, mode)
-    except IOError as e:
-        sys.stderr.write ('unable to open file {0}: {1}\n'.format(e.filename, e.strerror))
-        sys.exit (1)
+    def get_elf (self, stream):
+        try:
+            return ELFFile (stream)
+        except ELFError as e:
+            sys.stderr.write ("ERROR: {0}\nfile must be an ELF, or gzipped ELF file\n".format (e))
+            sys.exit (1)
 
-def get_elf (stream):
-    try:
-        return ELFFile (stream)
-    except ELFError as e:
-        sys.stderr.write ("ERROR: {0}\nfile must be an ELF, or gzipped ELF file\n".format (e))
-        sys.exit (1)
+    def open_gzip (self, fobj):
+        try:
+            gz = GzipFile (fileobj=fobj)
+            gz.read (1)
+            gz.seek (0)
+            return gz
+        except IOError as e:
+            return None
 
-def open_gzip (fobj):
-    try:
-        gz = GzipFile (fileobj=fobj)
-        gz.read (1)
-        gz.seek (0)
-        return gz
-    except IOError as e:
-        return None
+    def cptmp_file (self, fobj):
+        try:
+            tmp_file = tempfile.TemporaryFile ()
+            tmp_file.write (fobj.read ())
+            return tmp_file
+        except IOError as e:
+            print 'failed to gunzip MLE file to a tempfile'
+            sys.exit (1)
 
-def cptmp_file (fobj):
-    try:
-        tmp_file = tempfile.TemporaryFile ()
-        tmp_file.write (fobj.read ())
-        return tmp_file
-    except IOError as e:
-        print 'failed to gunzip MLE file to a tempfile'
-        sys.exit (1)
-
-def map_elf (infile, mle_elf):
-    try:
-        tmp_file = tempfile.TemporaryFile ()
-        for segment in mle_elf.iter_segments ():
-            if segment ['p_type'] is 'PT_LOAD':
-                _p_offset = segment ['p_offset']
-                _p_filesz = segment ['p_filesz']
-                _p_memsz  = segment ['p_memsz']
-                _elf_end = _p_offset + _p_filesz
-                # copy segment
-                tmp_file.write (infile [_p_offset : _elf_end])
-                # 0 fill remaining area
-                for a in range (_p_memsz - _p_filesz):
-                    tmp_file.write ('\x00')
-        return mmap.mmap (tmp_file.fileno (), 0, access=mmap.ACCESS_WRITE)
-    except IOError as e:
-        print 'error decompressing ELF file'
-        sys.exit (1)
-
-def main():
-    args = get_args ()
-    mle_file = open_file (args.mle, 'rb')
-    gzip_file = open_gzip (mle_file)
-    if gzip_file is not None:
-        tmp_file = cptmp_file (gzip_file)
-        gzip_file.close ()
-        mle_file.close ()
-        mle_file = tmp_file
-    mle_mmap = mmap.mmap (mle_file.fileno (), 0, access=mmap.ACCESS_COPY)
-    mle_elf = get_elf (mle_mmap)
-    elf_mmap = map_elf (mle_mmap, mle_elf)    
-    index = elf_mmap.find (mle_uuid.bytes)
-    if index < 0:
-        print 'file supplied is not an MLE.'
-        sys.exit (1)
-    mle_hdr = txt.mleHeader (elf_mmap, True, index, args.arg_str)
-    mle_sha1 = mle_hdr.hash_sha1 ().hexdigest ()
-    print '{0}'.format (mle_sha1)
+    def map_elf (self, infile, mle_elf):
+        try:
+            tmp_file = tempfile.TemporaryFile ()
+            for segment in mle_elf.iter_segments ():
+                if segment ['p_type'] is 'PT_LOAD':
+                    _p_offset = segment ['p_offset']
+                    _p_filesz = segment ['p_filesz']
+                    _p_memsz  = segment ['p_memsz']
+                    _elf_end = _p_offset + _p_filesz
+                    # copy segment
+                    tmp_file.write (infile [_p_offset : _elf_end])
+                    # 0 fill remaining area
+                    for a in range (_p_memsz - _p_filesz):
+                        tmp_file.write ('\x00')
+            return mmap.mmap (tmp_file.fileno (), 0, access=mmap.ACCESS_WRITE)
+        except IOError as e:
+            print 'error decompressing ELF file'
+            sys.exit (1)
+    def run (self):
+        mle_file = self.open_file (self._mle, 'rb')
+        gzip_file = self.open_gzip (mle_file)
+        if gzip_file is not None:
+            tmp_file = self.cptmp_file (gzip_file)
+            gzip_file.close ()
+            mle_file.close ()
+            mle_file = tmp_file
+        mle_mmap = mmap.mmap (mle_file.fileno (), 0, access=mmap.ACCESS_COPY)
+        mle_elf = self.get_elf (mle_mmap)
+        elf_mmap = self.map_elf (mle_mmap, mle_elf)    
+        index = elf_mmap.find (mle_uuid.bytes)
+        if index < 0:
+            print 'file supplied is not an MLE.'
+            sys.exit (1)
+        mle_hdr = txt.mleHeader (elf_mmap, True, index, self._arg_str)
+        mle_sha1 = mle_hdr.hash_sha1 ().hexdigest ()
+        print '{0}'.format (mle_sha1)
 
 if __name__ == "__main__":
-    main()
+    prog = mleHash_Prog ()
+    prog.run ()
