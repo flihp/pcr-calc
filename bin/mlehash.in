@@ -48,7 +48,7 @@ class mleHash_Prog (object):
         try:
             return ELFFile (stream)
         except ELFError as e:
-            sys.stderr.write ("ERROR: {0}\nfile must be an ELF, or gzipped ELF file\n".format (e))
+            sys.stderr.write ("File must be an ELF, or gzipped ELF file: {0}\n".format (e))
             sys.exit (1)
 
     def open_gzip (self, fobj):
