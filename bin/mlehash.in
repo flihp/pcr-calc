@@ -69,7 +69,7 @@ class mleHash_Prog (object):
             sys.stderr.write ('failed to gunzip MLE file to a tempfile {0}: {1}\n'.format (e.filename, e.strerror))
             sys.exit (1)
 
-    def map_elf (self, infile, mle_elf):
+    def extract_elf_mmap (self, infile, mle_elf):
         try:
             tmp_file = tempfile.TemporaryFile ()
             for segment in mle_elf.iter_segments ():
@@ -98,7 +98,7 @@ class mleHash_Prog (object):
             mle_file = tmp_file
         mle_file_mmap = mmap.mmap (mle_file.fileno (), 0, access=mmap.ACCESS_COPY)
         mle_elf = self.get_elf (mle_file_mmap)
-        elf_mmap = self.map_elf (mle_file_mmap, mle_elf)    
+        elf_mmap = self.extract_elf_mmap (mle_file_mmap, mle_elf)    
         index = elf_mmap.find (mle_uuid.bytes)
         if index < 0:
             sys.stderr.write ('File supplied is not an MLE.\n')
