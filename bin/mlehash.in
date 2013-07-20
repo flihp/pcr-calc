@@ -91,6 +91,13 @@ class mleHash_Prog (object):
             sys.stderr.write ('error decompressing ELF file {0}: {1}\n'.format (e.filename, e.strerror))
             sys.exit (1)
 
+    def get_mle_hdr (self, elf_mmap):
+        index = elf_mmap.find (mle_uuid.bytes)
+        if index < 0:
+            sys.stderr.write ('Unable to find MLE in file: {0}.\n'.format (self._mle))
+            sys.exit (1)
+        return txt.mleHeader (elf_mmap, True, index, self._arg_str)
+
     def run (self):
         mle_file = self.open_file (self._mle, 'rb')
         gzip_file = self.open_gzip (mle_file)
@@ -102,11 +109,7 @@ class mleHash_Prog (object):
         mle_file_mmap = mmap.mmap (mle_file.fileno (), 0, access=mmap.ACCESS_COPY)
         mle_elf = self.get_elf (mle_file_mmap)
         elf_mmap = self.extract_elf_mmap (mle_file_mmap, mle_elf)    
-        index = elf_mmap.find (mle_uuid.bytes)
-        if index < 0:
-            sys.stderr.write ('Unable to find MLE in file: {0}.\n'.format (self._mle))
-            sys.exit (1)
-        mle_hdr = txt.mleHeader (elf_mmap, True, index, self._arg_str)
+        mle_hdr = self.get_mle_hdr (elf_mmap)
         mle_sha1 = mle_hdr.hash_sha1 ()
         if not self._bin_dump:
             print '{0}'.format (mle_sha1.hexdigest ())
