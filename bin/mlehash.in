@@ -95,9 +95,9 @@ class mleHash_Prog (object):
             gzip_file.close ()
             mle_file.close ()
             mle_file = tmp_file
-        mle_mmap = mmap.mmap (mle_file.fileno (), 0, access=mmap.ACCESS_COPY)
-        mle_elf = self.get_elf (mle_mmap)
-        elf_mmap = self.map_elf (mle_mmap, mle_elf)    
+        mle_file_mmap = mmap.mmap (mle_file.fileno (), 0, access=mmap.ACCESS_COPY)
+        mle_elf = self.get_elf (mle_file_mmap)
+        elf_mmap = self.map_elf (mle_file_mmap, mle_elf)    
         index = elf_mmap.find (mle_uuid.bytes)
         if index < 0:
             sys.stderr.write ('File supplied is not an MLE.\n')
