@@ -15,9 +15,6 @@ import uuid
 
 sys.path.insert(1, '@pythondir@/@PACKAGE@')
 
-mle_uuid_str = '5aac8290-6f47-a774-0f5c-55a2cb51b642'
-mle_uuid = uuid.UUID (mle_uuid_str)
-
 class mleHash_Prog (object):
     def __init__ (self):
         description = 'calculate SinitMleData.MleHash from MLE ELF'
@@ -36,6 +33,10 @@ class mleHash_Prog (object):
         self._mle = args.mle
         self._arg_str = args.arg_str
         self._bin_dump = args.binary
+
+        # magic UUID used to identify an MLE
+        self._mle_uuid_str = '5aac8290-6f47-a774-0f5c-55a2cb51b642'
+        self._mle_uuid = uuid.UUID (self._mle_uuid_str)
 
     def open_file (self, fname, mode):
         try:
@@ -92,7 +93,7 @@ class mleHash_Prog (object):
             sys.exit (1)
 
     def get_mle_hdr (self, elf_mmap):
-        index = elf_mmap.find (mle_uuid.bytes)
+        index = elf_mmap.find (self._mle_uuid.bytes)
         if index < 0:
             sys.stderr.write ('Unable to find MLE in file: {0}.\n'.format (self._mle))
             sys.exit (1)
