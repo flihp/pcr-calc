@@ -87,6 +87,7 @@ class mleHash_Prog (object):
         except IOError as e:
             sys.stderr.write ('error decompressing ELF file {0}: {1}\n'.format (e.filename, e.strerror))
             sys.exit (1)
+
     def run (self):
         mle_file = self.open_file (self._mle, 'rb')
         gzip_file = self.open_gzip (mle_file)
