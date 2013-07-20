@@ -66,7 +66,7 @@ class mleHash_Prog (object):
             tmp_file.write (fobj.read ())
             return tmp_file
         except IOError as e:
-            sys.stderr.write ('failed to gunzip MLE file to a tempfile {0}: {1}\n'.format (e.filename, e.strerror))
+            sys.stderr.write ('failed to gunzip MLE file to a tempfile: {0}\n'.format (e))
             sys.exit (1)
 
     def extract_elf_mmap (self, infile, mle_elf):
@@ -101,7 +101,7 @@ class mleHash_Prog (object):
         elf_mmap = self.extract_elf_mmap (mle_file_mmap, mle_elf)    
         index = elf_mmap.find (mle_uuid.bytes)
         if index < 0:
-            sys.stderr.write ('File supplied is not an MLE.\n')
+            sys.stderr.write ('Unable to find MLE in file: {0}.\n'.format (self._mle))
             sys.exit (1)
         mle_hdr = txt.mleHeader (elf_mmap, True, index, self._arg_str)
         mle_sha1 = mle_hdr.hash_sha1 ()
