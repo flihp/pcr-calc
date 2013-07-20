@@ -737,8 +737,9 @@ class mleHeader (binParse):
     _CMDLINE_END_OFF_OFFSET = _CMDLINE_START_OFF_OFFSET + _CMDLINE_START_OFF_SIZE
     _CMDLINE_END_OFF_SIZE = 4
 
-    def __init__(self, pfile, pmmap=False, poffset=0):
+    def __init__(self, pfile, pmmap=False, poffset=0, cmdline=''):
         self._offset = poffset
+        self._cmdline = cmdline
         super (mleHeader, self).__init__ (pfile, pfile)
     def uuid_bytes (self):
         return self._read_bytes (self._offset + self._UUID_OFFSET, self._UUID_SIZE)
@@ -762,6 +763,14 @@ class mleHeader (binParse):
         return self._read_uint (self._offset + self._CMDLINE_START_OFF_OFFSET, self._CMDLINE_START_OFF_SIZE)
     def cmdline_end_off (self):
         return self._read_uint (self._offset + self._CMDLINE_END_OFF_OFFSET, self._CMDLINE_END_OFF_SIZE)
+    def hash_sha1 (self):
+        for a in range (self.cmdline_start_off (), self.cmdline_end_off ()) :
+            self._filemmap [a] = '\x00'
+        for a in range (len (self._cmdline)) :
+            self._filemmap [self.cmdline_start_off () + a] = self._cmdline [a]
+        _sha1 = hashlib.sha1 ()
+        _sha1.update (self._filemmap [self.mle_start_off () : self.mle_end_off ()])
+        return _sha1
 
 def hash_module (cmdline, fd_module):
     '''  from tboot-1.7.3/tboot/common/policy.c
