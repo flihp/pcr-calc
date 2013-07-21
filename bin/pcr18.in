@@ -18,15 +18,17 @@ err_heap = 'Error reading TXT Heap: {0}\n'
 def get_args ():
     description = "Calculate PCR[18] from a TXT Heap"
     cmd_help = 'file containing command line for module'
-    heapfile_help = 'file to read as TXT Heap, /dev/mem is default'
     mmap_help = 'access file through mmap'
     mod_help = 'module file'
+    mle_args_help = 'MLE arguments'
+    mle_help = 'ELF file containing the MLE'
     ver_help = "version information"
     ver_str = "%(prog)s: @PACKAGE@ @VERSION@"
 
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument('heapfile', help=heapfile_help, default='/dev/mem')
     parser.add_argument('-v', '--version', help=ver_help, action='version', version=ver_str)
+    parser.add_argument('-e', '--mle-elf', help=mle_help, required=True)
+    parser.add_argument('-a', '--mle-args', help=mle_args_help, required=True)
     parser.add_argument('-m', '--mmap', help=mmap_help, action='store_true')
     parser.add_argument('-o', '--module', help=mod_help)
     parser.add_argument('-c', '--cmdline', help=cmd_help)
@@ -40,44 +42,20 @@ def open_file (fname, mode):
         sys.exit (1)
     return fd
 
-def get_txt_heap (fd, mmap):
-    dev_mem = False
-    if fd.name == '/dev/mem':
-        dev_mem = True
-
-    try:
-        if dev_mem:
-            txtPubRegs = txt.pubConfRegsParse (fd, mmap, dev_mem)
-            heap = txt.txtHeap (fd, mmap, txtPubRegs.HeapBase (), txtPubRegs.HeapSize ())
-        else:
-            fd.seek (0,2)
-            file_size = fd.tell ()
-            fd.seek (0)
-            heap = txt.txtHeap (fd, mmap, 0, file_size)
-    except IOError as e:
-        sys.stderr.write (err_heap.format (e))
-        sys.exit (1)
-    return heap
-
-def get_sinit_mle (txt_heap):
-    try:
-        sinit_mle = txt.sinitMleData (txt_heap.SinitMleData ())
-        print 'sinit_mle.MleHash:'
-        for _bytestr in txt.pp_bytearray (sinit_mle.MleHash ()):
-            print "    {0}".format (_bytestr)
-    except IOError as e:
-        sys.stderr.write (err_open.format (e.filename, e.strerror))
-        sys.exit (1)
-    return sinit_mle
-
 def main():
     args = get_args ()
-    fd = open_file (args.heapfile, 'rb')
-    heap = get_txt_heap (fd, args.mmap)
-    sinit_mle = get_sinit_mle (heap)
 
+    fd_mle = open_file (args.mle_elf, 'rb')
     fd_cmdline = open_file (args.cmdline, 'r')
     fd_module = open_file (args.module, 'rb')
+
+    mle_util = txt.MLEUtil (args.mle_args, fd_mle)
+    try:
+        mle_hdr = mle_util.get_mle_hdr ()
+    except txt.MLEError as e:
+        sys.stderr.write ('{0}\n'.format (e.message))
+        sys.exit (1)
+    print 'MLE Hash: {0}'.format (mle_hdr.hash_sha1 ().hexdigest ())
 
     mod_hash = txt.hash_module (fd_cmdline.readline (), fd_module)
     fd_cmdline.close ()
@@ -85,7 +63,7 @@ def main():
     print 'module hash: {0}'.format (mod_hash.hexdigest ())
 
     pcr18 = txt.pcrEmu ()
-    pcr18.extend (sinit_mle.MleHash ())
+    pcr18.extend (mle_hdr.hash_sha1 ().digest ())
     pcr18.extend (mod_hash.digest ())
     print msg_pcr.format (pcr18.hexread ())
 
