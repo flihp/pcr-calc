@@ -4,10 +4,14 @@
 # module for interacting with stuff from TXT
 
 import base64
+from elftools.elf.elffile import ELFFile
+from elftools.common.exceptions import ELFError
+from gzip import GzipFile
 import hashlib
 import struct
 import datetime
 import mmap
+import tempfile
 import uuid
 
 class acmFlags(object):
@@ -771,6 +775,60 @@ class mleHeader (binParse):
         _sha1 = hashlib.sha1 ()
         _sha1.update (self._filemmap [self.mle_start_off () : self.mle_end_off ()])
         return _sha1
+
+class MLEError (Exception):
+    def __init__ (self, message):
+        self.message = message
+
+class MLEUtil (object):
+    _MLE_UUID_STR = '5aac8290-6f47-a774-0f5c-55a2cb51b642'
+    _MLE_UUID = uuid.UUID (_MLE_UUID_STR)
+    def __init__ (self, arg_str, mle_file_obj):
+        self._arg_str = arg_str
+        self._mle_file_obj = mle_file_obj
+
+    def _open_gzip (self, fobj):
+        try:
+            _gz = GzipFile (fileobj=fobj)
+            _gz.read (1)
+            _gz.seek (0)
+        except IOError as e:
+            _gz = None
+        return _gz
+
+    def _extract_elf_mmap (self, fobj):
+        try:
+            _mle_elf = ELFFile (fobj)
+            _tmp_file = tempfile.TemporaryFile ()
+            for segment in _mle_elf.iter_segments ():
+                if segment ['p_type'] is 'PT_LOAD':
+                    _p_offset = segment ['p_offset']
+                    _p_filesz = segment ['p_filesz']
+                    _p_memsz  = segment ['p_memsz']
+                    _elf_end = _p_offset + _p_filesz
+                    # copy segment
+                    _tmp_file.write (fobj [_p_offset : _elf_end])
+                    # 0 fill remaining area
+                    for a in range (_p_memsz - _p_filesz):
+                        _tmp_file.write ('\x00')
+            return mmap.mmap (_tmp_file.fileno (), 0, access=mmap.ACCESS_WRITE)
+        except IOError as e:
+            raise MLEError ('error decompressing ELF file {0}: {1}'.format (e.filename, e.strerror))
+
+    def get_mle_hdr (self):
+        _mle_file_obj = self._mle_file_obj
+        _gz = self._open_gzip (_mle_file_obj)
+        if _gz is not None:
+            _tmp_file = tempfile.TemporaryFile ()
+            _tmp_file.write (_gz.read ())
+            _gz.close ()
+            _mle_file_obj = _tmp_file
+        _mle_file_mmap = mmap.mmap (_mle_file_obj.fileno (), 0, access=mmap.ACCESS_COPY)
+        _elf_mmap = self._extract_elf_mmap (_mle_file_mmap)
+        _index = _elf_mmap.find (self._MLE_UUID.bytes)
+        if _index < 0:
+            raise MLEError ('Unable to find MLE in file: {0}.'.format (self._mle_file_obj.name))
+        return mleHeader (_elf_mmap, True, _index, self._arg_str)
 
 def hash_module (cmdline, fd_module):
     '''  from tboot-1.7.3/tboot/common/policy.c
