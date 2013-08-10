@@ -4,14 +4,8 @@
 #
 
 import argparse
-from elftools.elf.elffile import ELFFile
-from elftools.common.exceptions import ELFError
-from gzip import GzipFile
-import mmap
 import sys
-import tempfile
 import txt
-import uuid
 
 sys.path.insert(1, '@pythondir@/@PACKAGE@')
 
