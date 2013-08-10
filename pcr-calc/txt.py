@@ -790,6 +790,7 @@ class MLEUtil (object):
     def _open_gzip (self, fobj):
         try:
             _gz = GzipFile (fileobj=fobj)
+            # read will fail if fobj isn't a proper gzip
             _gz.read (1)
             _gz.seek (0)
         except IOError as e:
