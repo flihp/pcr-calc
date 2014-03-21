@@ -5,9 +5,10 @@
 
 import argparse
 import sys
-import txt
 
 sys.path.insert(1, '@pythondir@/@PACKAGE@')
+
+import txt
 
 class mleHash_Prog (object):
     def __init__ (self):
