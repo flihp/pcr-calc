@@ -1,1 +1,10 @@
-./configure; make; make install;
+# if you're building from git you'll need to have the GNU autotools dev
+# package installed and run the following
+aclocal
+autoconf
+automake --add-missing
+# if you're installing from a release tarball you should only have to run the
+# standard
+./configure
+make
+make install
