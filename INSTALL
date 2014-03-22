@@ -1,8 +1,15 @@
 # if you're building from git you'll need to have the GNU autotools dev
-# package installed and run the following
+# package installed (tested with v2.69 only) and run the following
 aclocal
 autoconf
 automake --add-missing
+
+# pcr-calc depends on the pyelftools python module. On Debian install it using
+# python-setuptools
+sudo apt-get install python-setuptools
+sudo easy_install pip
+sudo pip install pyelftools
+
 # if you're installing from a release tarball you should only have to run the
 # standard
 ./configure
